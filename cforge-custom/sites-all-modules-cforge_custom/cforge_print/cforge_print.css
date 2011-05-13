@@ -1,0 +1,74 @@
+body {
+  margin: 1em;
+  background: white;
+  font-family: sans-serif;
+}
+div.table-wrapper{
+    clear:both;
+}
+thead th{
+  border-bottom: 3px solid black;
+  padding-top:10px;
+  padding-bottom:10px;
+}
+th{align:left;}
+
+tr{
+  margin-top:10px;
+}
+
+#cforge-print-table tr{
+  border-bottom: thin solid #ddd;
+}
+
+tr.cc-category{
+  font-weight:bold;
+  background:#ddd;
+  line-height:1.5em;
+  font-size:1.3em;
+}
+
+#cforge-print-table{border-collapse:collapse;}
+#cforge-print-table thead {
+  display: table-header-group;
+  text-align:left;
+}
+#cforge-print-table th,
+#cforge-print-table td{
+  padding: 0.3em 1.5em 0.3em 0;
+  vertical-align: top;
+  font-size:85%;
+}
+#cforge-print-table pre{
+  font-family: inherit;
+  margin:0;
+}
+#cforge-print-sitename {
+  font-weight:normal;
+  font-size:80%;
+}
+
+div.cforge-print-column{
+  float:left;
+  width: 30%;
+  padding:0 1em;
+}
+div.cforge-print-member{
+  margin-bottom: 2em;
+ }
+
+.print-logo{
+  float:left;
+  padding-right:2em;
+}
+
+/*
+div.cforge-print-page{
+  page-break-after:always;
+  clear:both;
+}
+
+_cforge-print-table tr.odd {
+  background-color: #ddd;
+}
+*/

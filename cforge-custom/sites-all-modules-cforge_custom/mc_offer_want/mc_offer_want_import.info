@@ -1,0 +1,7 @@
+; $Id:
+name = Mc offers/wants import
+description = paste your comma separated values
+core = "6.x"
+dependencies[] = mc_offer_want
+dependencies[] = mcapi_import
+files[] = mc_offer_want_import.module

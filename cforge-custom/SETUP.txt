@@ -1,0 +1,53 @@
+How to use the cforge_custom package
+
+This package contains the glue code and configuration for many other drupal modules and can be tricky to set up.
+This file shows the exact steps.
+
+Start with a fresh Drupal installation, log in as user 1, and navigate to the Drupal directory in your filesystem
+
+1. Copy sites-all-modules-cforge_custom to /sites/all/modules/cforge_custom
+2. Copy sites-all-themes-cforge_subtheme to sites/all/themes/cforge_subtheme
+3. On http://mydomain.com/admin/build/modules, enable content_copy, image, date, and date_api
+4. On http://mydomain.com/admin/build/modules, optionally enable locale, devel, demo, uid_login, and autocategorise
+5. On http://mydomain.com/admin/build/translate/import import your language po file from the top of this package
+6. On http://mydomain.com/admin/build/modules, enable cforge_custom module
+
+Now you are ready to follow the how-tos listed at ...
+
+Copy your chosen theme into /sites/all/themes
+Edit sites/all/themes/cforge_subtheme/cforge_subtheme.info and change the base_theme to your chosen theme's machine name (the .info file prefix)
+Position the blocks on installing the theme - is there a hook for that?
+
+
+For the following tasks you will need to enable the devel module and navigate to http://mydomain.com/devel/php
+
+;TO CREATE SYSTEM ACCOUNTS
+;In the php block run these lines
+  $newUser = array(
+    'name' => 'routedessel',
+    'pass' => 'adminsel', // note: do not md5 the password
+    'mail' => 'rds@communityforge.net',
+    'status' => 1,
+    'init' => 'rds@communityforge.net',
+    'profile_firstname' => 'Route',
+    'profile_familyname' => 'des SEL',
+    'roles' => array(RID_TRADER => TRUE, RID_SYSTEM => TRUE),
+  );
+  user_save(NULL, $newUser);
+
+  $newUser = array(
+    'name' => 'intersel',
+    'pass' => 'adminsel', // note: do not md5 the password
+    'mail' => 'intersel@communityforge.net',
+    'status' => 1,
+    'init' => 'intersel@communityforge.net',
+    'profile_firstname' => 'Inter',
+    'profile_familyname' => 'SEL',
+    'roles' => array(RID_TRADER => TRUE, RID_SYSTEM => TRUE),
+  );
+  user_save(NULL, $newUser);
+
+
+TO CREATE THE CFORGE DEFAULT USER PROFILE FIELDS:
+  module_load_include('install', cforge_custom
+  setup_profile_fields();

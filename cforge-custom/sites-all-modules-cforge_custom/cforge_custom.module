@@ -1,0 +1,736 @@
+<?php
+
+//alterations must be made in the install file where these constants are also defined
+define('CONTACT_HOURLY_THRESHOLD', 30);
+
+//vocabulary IDs
+define('OFFERS_WANTS_VID', 1);
+define('SIMPLENEWS_VID', 2);
+define('GALLERY_VID', 3);
+define('DOCTYPE_VID', 4);
+//roles
+define('RID_TRADER', 3);
+define('RID_COMMITTEE', 4);
+define('RID_ACCOUNTANT', 5);
+define('RID_LOCAL_ADMIN', 6);
+define('RID_SYSTEM', 7);
+
+
+
+/*
+ * Needed for the views 2 module
+ */
+function cforge_custom_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'cforge_custom'),
+  );
+}
+
+function cforge_custom_cron() {
+  db_query("DELETE FROM sessions WHERE uid = 0 AND timestamp < %d", strtotime('-1 day'));
+  db_query("DELETE FROM {cache_form} WHERE expire != %d AND expire < %d", CACHE_PERMANENT, time());
+
+}
+
+/**
+ * Implementation of hook_init().
+ * http://api.drupal.org/api/function/hook_init/6
+ */
+function cforge_custom_init() {
+  drupal_add_css(drupal_get_path('module', 'cforge_custom') .'/cforge.css');
+  // saves adding the disable password strength module
+  if (arg(0) === 'user' || (arg(2) == 'user' && arg(3) == 'create')) {
+    drupal_add_js('Drupal.behaviors.password = function () {};', 'inline', 'footer');
+  }
+}
+
+
+function cforge_custom_menu() {
+/*
+  $items['user/%user_uid_optional/exchanges'] = array(
+    'title' => 'Exchanges',
+    'description' => 'All your exchanges',
+    'page callback' => 'exchanges_list',
+    'page arguments' => array(1, array(EXCHANGE_STATE_COMPLETED, EXCHNAGE_STATE_PENDING)),
+    'access callback' => 'mcapi_access',
+    'access arguments' => array('bureau', 'transaction', 1),
+    'file path' => drupal_get_path('module', 'mc_display'), 
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 0,
+  );
+*/
+  $items['dump'] = array(
+    'page callback' => 'cforge_dump',
+    'access arguments' => array('edit all exchanges'),
+    'type' => MENU_CALLBACK
+  );
+  $items['cforge_custom_refresh'] = array(
+    'page callback' => 'cforge_custom_refresh',
+    'access arguments' => array('aaaa'),//only user 1
+    'type' => MENU_CALLBACK,
+    'file' => 'cforge_custom.install'
+  );
+  return $items;
+}
+
+function cforge_custom_perm() {
+  return array('local admin', 'committee');
+}
+
+
+function cforge_custom_menu_alter(&$items) {
+  //rename the /user menu item
+  $items['user/%user_uid_optional']['title'] = t('My account');
+  //tweak the user tabs
+  $items['user/%user/edit']['title'] = t('Account');
+  //this is to correct the simplenews callback which has the wrong access
+  $items['user/%user_category/edit/newsletter']['access callback'] = 'user_edit_access';
+  $items['user/%user_category/edit/newsletter']['access arguments'] = array(1);
+  unset($items['user/%user/bureau']);
+  $items['user/%views_arg/directory']['weight'] = -1;
+  $items['user/%views_arg/acknowledgements']['weight'] = 4;
+  $items['user/%user/contact']['weight'] = 5;
+  //move some menu items 
+  $items['image']['menu_name'] = 'secondary-links';
+  $items['image']['type'] = MENU_NORMAL_ITEM;
+  $items['image']['title'] = 'Gallery';
+  $items['contact']['menu_name'] = 'secondary-links';
+  $items['contact']['type'] = MENU_NORMAL_ITEM;
+  $items['tasks']['menu_name'] = 'primary-links';
+  $items['exchanges']['menu_name'] = 'primary-links';
+  $items['admin/mc/unsigned']['menu_name'] = 'manage';
+
+  //these are views-created parent links
+  $items['tasks']['menu_name'] = 'primary-links';
+  $items['members']['menu_name'] = 'primary-links';
+  //alter the access so the local admin can see some admin pages.
+  $items['admin/user/permissions']     ['access arguments'] = array('access administration pages');
+  $items['admin/user/roles']		   ['access arguments'] = array('access administration pages');
+  $items['admin/user/profile']         ['access arguments'] = array('access administration pages');
+  $items['admin/settings/smtp']        ['access arguments'] = array('local admin');
+  $items['admin/settings/site-information']         ['access arguments'] = array('local admin');
+  $items['admin/build/themes/settings/sky_seldulac']['access callback'] = 'user_access';
+  $items['admin/build/themes/settings/sky_seldulac']['access arguments'] = array('local admin');
+  $items['admin/mc/notification']                ['access arguments'] = array('local admin');
+  //committee can re-arrange menu items but not add and remove them through the menu interface
+  $items['admin/build/menu-customize/%menu']     ['access arguments'] = array('committee');
+  $items['admin/build/menu-customize/%menu/list']['access arguments'] = array('committee');
+  $items['admin/build/menu-customize/%menu/edit']['access arguments'] = array('committee');
+  $items['admin/build/menu-customize/%menu/add'] ['access arguments'] = array('access administration pages');
+  $items['admin/build/menu-customize/%menu/delete']['access arguments']=array('access administration pages');
+  $items['admin/content/node']                   ['access arguments'] = array('committee');
+  $items['admin/content/taxonomy/%taxonomy_vocabulary']['access arguments'] = array('committee');
+  $items['admin/content/image']                  ['access arguments'] = array('committee');
+  $items['admin/user/user']                      ['access arguments'] = array('committee');
+  $items['admin/user/settings']                  ['access arguments'] =  array('committee');
+  $items['logout']['weight'] = 50;
+  $items['user/autocomplete']['page callback'] = 'cforge_user_autocomplete';
+  $items['user/autocomplete']['access arguments'] = array('exchange');
+} 
+
+function cforge_custom_form_alter(&$form, $form_state, $form_id) {
+  global $user;    
+  //responsibility field should only show on the edit forms of committee members
+  switch ($form_id) {
+    case 'node_form':
+      $form['taxonomy'][OFFERS_WANTS_VID]['#access'] = FALSE;
+      break;
+    case 'user_profile_form':
+      $form['#validate'][] = 'usertabs_validation_hack';
+      //responsibility field should only show on the edit forms of committee members
+      if (!in_array('committee', $form['_account']['#value']->roles)) {
+        unset($form['details']['profile_responsibility']);
+      }
+      $form['timezone']['#access'] = FALSE;
+      foreach (array(RID_COMMITTEE, RID_ACCOUNTANT, RID_LOCAL_ADMIN, RID_SYSTEM) as $rid) {
+        $form["role_expire_$rid"]['#access'] = FALSE;
+      }
+      $form['account']['roles'][2]['#access'] = FALSE;
+      break;
+    case 'contact_mail_page':
+      $form['#prefix'] = variable_get('site_mission', '');
+    case 'search_block_form':
+    case 'search_theme_form':
+      $form['search_block_form']['#title'] = '';  
+      break;
+	case 'system_site_information_settings':
+      $form['site_name']['#title'] = t("The name of your community");
+      $form['site_name']['#description'] = t("This cannot be changed, without also changing the site name in communityforge.net, because this is how the site is identified with the cforge_user");
+      break;
+  }
+
+  //this form altering is mostly for the local admin, who is not user 1
+  if ($user->uid == 1) {return;}
+
+  $form['menu']['#access'] = FALSE;//default case - set to TRUE for pages below
+
+  switch ($form_id) {
+    case 'system_site_information_settings':
+      $form['site_name']['#access'] = FALSE;
+      $form['site_slogan']['#description'] = t("Slogan shows next to the site name");
+      $form['site_mission']['#title'] = t('Physical address(es)');
+      $form['site_mission']['#description'] = t('Where do you hold most of your meetings?');
+      $form['site_footer']['#access'] = FALSE;
+      $form['anonymous']['#access'] = FALSE;
+      $form['site_frontpage']['#access'] = FALSE;
+      $form['site_mail']['#title'] = t("Site email");
+      $form['site_mail']['#description'] = t("Enter the email address of the person who will be managing membership within your scheme.");
+
+      break;
+    case 'user_admin_settings':
+      $form['pictures']['#access'] = FALSE;
+      $form['signatures']['#access'] = FALSE;
+      break;
+    case 'user_profile_form':
+      if ($form['#uid'] == 1){
+        $form['account']['pass']['#access'] = FALSE;
+        $form['account']['status']['#access'] = FALSE;
+        $form['account']['roles']['#access'] = FALSE;
+      }
+      break;
+    case 'user_login_block':
+    case 'user_login':
+      $form['pass']['#title'] = t('Password');
+      $form['name']['#size']=10;
+      $form['pass']['#size']=10;
+      unset ($form['links']);
+      break;
+    case 'page_node_form':
+      //ensure the front page can't have it's alias altered.
+      if ($form['path']['path']['#default_value'] == 'home') {
+	      $form['path']['#access'] = FALSE;
+	    }
+      $form['menu']['#access'] = TRUE;
+      //forces users to use flat menu, and only the three provided, using the names provided
+      //the defaut settings need a lot of explanation
+      $form['menu']['parent']['#options'] = array(
+        'visitors:0' => 'Menu 0',
+        'primary-links:0' => 'Menu 1',
+        'secondary-links:0' => 'Menu 2'
+      );
+	    break;
+    case 'node_admin_content':
+      unset ($form['admin']['options']);
+      break;
+    case 'system_theme_settings':
+      $form['theme_specific']['#access'] = FALSE;
+      $form['theme_settings']['#access'] = FALSE;
+      break;
+    case 'menu_overview_form': 
+      foreach($form as $key => $mlid) {
+        if (isset($form[$key]['operations']['reset'])) {
+          //unset ($form[$key]['operations']['reset']);
+        }
+      }
+      break;
+    case 'taxonomy_form_term': 
+      $form['advanced']['#access'] = FALSE;
+      break;
+  }
+}
+
+function cforge_custom_user($op, &$edit, &$account, $category = NULL) {
+  switch($op) {
+    case 'login':
+      $_REQUEST['destination'] = 'news/recent';
+      break;
+    case 'submit':
+      if (!module_exists('uid_login')) return;
+      if ($category == t('Details') && module_exists('uid_login')) {//FOR DRUPAL 7 SEE realname_registration module
+        $edit['name'] = $edit['profile_firstname'] . ' '. $edit['profile_familyname'];
+      }
+      break;
+    case 'form':
+      //this system doesn't show usernames to anyone, but uses sky_seldulac_username() instead
+      $form['pass']['#access'] == FALSE;
+      //prevent non-admin from editing account 1 login
+      if ($account->uid == 1 && $GLOBALS['user']->uid > 1) {
+      	$form['name']['#access'] = FALSE;
+      }
+      break;
+  }
+}
+
+
+function cforge_custom_block($op = 'list', $delta = 0, $edit = array()) {
+  switch($op) {
+    case 'list':
+      return cforge_custom_block_list();
+    case 'view':
+      return cforge_custom_block_view($delta);
+  }
+}
+function cforge_custom_block_list() {
+  return array(
+    'jumpdown' => array(
+      'info' => t('Jumpdown links'),
+      'cache' => BLOCK_CACHE_PER_PAGE
+    ),
+    'cforge_credit' => array(
+      'info' => 'Cforge Credit'
+    )
+  );
+}
+
+function cforge_custom_block_view($delta) {
+  switch ($delta) {
+    case 'jumpdown':
+      return array(
+        'subject' => t('On this page...'),
+        'content' => _get_headings(),
+      );
+    case 'cforge_credit':
+      return array(
+        'subject' => '<none>',
+        'content' => t('Site designed and hosted for free by !cforge, a non-profit association registered in Geneva, Switzerland.', array('!cforge' => l('Community Forge', 'http://communityforge.net')))
+      );
+  }
+}
+
+function cforge_custom_theme() {
+  return array (
+    'offline_contact' => array(
+      'template' => 'offline_contact',
+      'arguments' => array(
+        'account' => NULL,
+      )
+    ),
+  );
+}
+function template_preprocess_offline_contact($vars){
+  $account = $vars['account'];
+  $vars['phone1'] = $account->profile_phone1;
+  $vars['phone2'] = $account->profile_phone2;
+  $vars['email'] = $account->mail;
+  $vars['address'] = $account->profile_address .'<br />'. $account->profile_ville;
+  $vars['responsibility'] = $account->profile_responsibility;
+  $vars['locality'] = $account->profile_locality;
+  $vars['name'] = theme('username', $account);
+}
+
+
+/*
+ * for use with the user_import module
+ */
+function cforge_custom_user_import_form_field_match() {
+  $options = array();
+  $options['cforge_custom']['user_created'] = t('Created');
+  return $options;
+}
+
+function cforge_custom_user_import_after_save($settings, $account, $password, $fields, $updated, $update_setting_per_module) {
+  $created  = strtotime($fields['cforge_custom']['user_created'][0]);
+  if (!is_integer($created)) {
+    drupal_set_message(t('unrecognised strtotime format for user @uid created date: @date',
+      array('@uid' => $account->uid, '@date' => $fields['cforge_custom']['user_created'][0]))
+    );
+  }
+  db_query("UPDATE {users} SET created  = %d WHERE uid = %d", array(':created' => $created, ':uid' => $account->uid));
+
+  if (isset($fields['uid_login'])) {
+    db_query("UPDATE {mc_cache} SET uid = %d WHERE uid = %d",
+      array(
+        ':uid_new' => $fields['uid_login']['uid_login'][0],
+        ':uid_old' => $account->uid
+      )
+    );
+  }
+  db_query("UPDATE {profile_values} SET uid = %d WHERE uid = %d",
+    array(
+      ':uid_new' => $fields['uid_login']['uid_login'][0],
+      ':uid_old' => $account->uid
+    )
+  );
+  if ($created = strtotime($fields['cforge_custom']['user_created'][0])) {
+    db_query("UPDATE {users} SET created  = %d WHERE uid = %d", array(':created' => $fields['uid_login']['uid_login'][0], ':uid' => $account->uid));
+  }
+}
+
+
+//moving features to the default page of the user profile, and their tabs are removed in hook_menu_alter
+function cforge_custom_profile_alter(&$account) {
+  $currency = array_pop(currencies_load());
+  //add the users balances to the default profile page
+  $account->content ['balances'] = array (
+    '#type' => 'user_profile_item', //this points directly to a tpl.php
+    '#title' => t('Balances'), 
+    '#value' => show_balances($account, array($currency->nid))
+  );
+  
+  //add the users balances to the default profile page
+  $account->content['balance_history'] = array (
+    '#type' => 'user_profile_item', //this points directly to a tpl.php
+    '#title' => t('Balance Chart'), 
+    '#value' => show_balance_history($account, array($currency->nid), $extent = 'limits', $since = 0)
+  );
+  
+  $account->content['balance_ometer'] = array (
+    '#type' => 'user_profile_item',
+    '#title' => t('Balance limits'), 
+    '#value' => show_balance_ometer($account, $currency->nid)
+  );
+  $picture_file = $account->picture 
+    ? $account->picture
+    : path_to_theme() . '/anonymous.jpg';
+    
+  $account->content['user_picture'] = array(
+    '#type' => 'user_profile_item',
+    '#value' => theme('imagecache', 'user_image_large', $picture_file),
+  );
+  
+  //build a little box with some essential details in it
+  if ($responsibility = $account->profile_responsibility) {
+    $summary = '<h4>'. $responsibility .'</h4>';
+  }
+  if ($address = $account->profile_address) {
+    $summary .= '<p><pre>'. $address .'</pre></p>';
+  }
+  if ($phone = $account->profile_phone1) {
+    $summary .= '<p><strong>tel: </strong>' . $phone;
+    if ($phone = $account->profile_phone2) {
+      $summary .= ', or '. $phone;
+    }
+    $summary .= '</p>';
+  }
+  $account -> content['summary'] = array (
+    '#type' => 'user_profile_item',
+    '#value' => $summary,
+  );
+}
+
+function cforge_custom_nodeapi(&$node, $op) {
+  //this is used for the jumpdown block (on FAQ page)
+  if ($node->nid == arg(1) && $op == 'view'){
+    preg_match_all('/<h3>([^<]*)/', $node->body, $matches);
+    foreach($matches[1] as $match) {
+      $node->content['body']['#value'] = str_replace('<h3>'.$match, "<a name=\"$match\"></a><h3>$match", $node->content['body']['#value']);
+    }
+  }
+  //automatically tag the newsletters with the first tag in the newsletter vocab
+  //this needs to be reviewed...
+  if ($node->type == 'simplenews' && $op == 'insert') {
+    $termid = db_result(db_query("SELECT tid from {term_data} WHERE vid = '%d'", SIMPLENEWS_VID));
+    if ($termid) taxonomy_node_save($node, array($termid));
+    else drupal_set_message(t("Unable to identify newsletter tag"));
+  }
+}
+
+
+//these is used with nodeapi to prepare the page and the dropdownlinks for the block 'jumpdown'
+function _get_headings() {
+  global $return;
+  if (stripos($return, '<h3')) {
+    preg_match_all('/<h3>([^<]*)/', $return, $matches);
+  }
+  else {
+  	  preg_match_all('/<caption>([^<]*)/', $return, $matches);
+  }
+  if (count($matches[1]) < 2 ) return;
+  foreach($matches[1] as $match) {
+    unset($link);
+    //Use only the first three words
+    $link =strtok($match, ' ');
+    for ($i = 0; $i < 3; $i++){
+      $link .= ' '.strtok(' ');
+    }
+    $block .= "\n<li class=\"leaf\"><a href=\"#$match\">$link</a></li>";
+  }
+  if ($block) return '<ul>'.$block .'</ul>';
+}
+
+
+
+//community documents help text
+//cforge_print has the help text for pages with a printable link.
+function cforge_custom_help($path, $arg) {
+  if (substr($path, 0, 4) == 'user') {
+    $account = user_load($arg[1]);
+    $name = strip_tags(theme('username', $account));
+    if (module_exists('uid_login')) {
+      $name .= ' ('.$arg[1].')';
+    }
+    if (strlen($account->profile_responsibility)) {
+      $name .= ', '.$account->profile_responsibility;
+    }
+    drupal_set_title($name);
+  }
+
+
+  switch ($path) {
+    case 'node/add/simplenews':
+      $help = t("Compose your newsletter and choose which group it should be sent to. Members can sign up to newsletters on the front page");
+      break;
+    case 'members/system':
+      if (user_access('committee')) $help = t("This is a list of users with the role 'system'. Go to the user's edit page to set roles.");
+      break;
+    case 'members':
+      $help = t("Choose the letter of the surname of the member you are trying to find below and/or sort by column to find an e-member quickly.") .' '.
+        t("Once on a member's page, you can easily enter a trade with them using the using the block to the left.");
+      break;
+    case 'recent_offers':
+    case 'recent_wants':
+      $help  = t('< refine your search by using the categories shown on the left.');
+    case 'tasks':
+    case 'tasks/complete':
+      $help = '<p>'. t("Votre Contribution à l'association compte. Voici la liste des petits 'coups de mains' que vous pouvez entreprendre pour contribuer.") .'</p>'.
+        '<p>'. t("Pour vous porter volontaire, cliquez sur le bouton 'Cliquez ici pour entreprendre cette Contribution") .'</p>' .
+        '<p>'. t("Une fois la Contribution accomplie, veuillez avertir un membre du comité afin de recevoir votre point 'Contribution'.") .'</p>' .
+        '<p>'. t("L'association vous remercie") .'</p>';
+    case 'admin/content/taxonomy/2':
+      $help = t("Design your classification system here. Create new categories and put them in order.") . '<br />' . 
+        t("The last category is a 'catch-all', so it must be 'miscellaneous', or 'other'");
+      break;
+    case 'admin/build/menu-customize/primary-links':
+    case 'admin/build/menu-customize/visitors':
+    case 'admin/build/menu-customize/secondary-links':
+      $help = t("Rearrange the menu items here by dragging them. Create and delete menu items when you edit the pages themselves");
+      break;
+    }
+  if (isset($help)) return '<p>'. $help .'</p>';
+ }
+
+/**
+ * Template preprocess theme function to print summary basically
+ * unformatted.
+ */
+function cforge_custom_preprocess_views_view_summary_unformatted(&$vars) {
+  static $argcounter;
+  foreach ($vars['rows'] as $id => $row) {
+    if ($argcounter) {
+      $vars['rows'][$id]->url = substr($vars['rows'][$id]->url, 0,-1) . 'all/' . substr($vars['rows'][$id]->url, -1);
+    }
+    else {
+      $vars['rows'][$id]->url .= '/all';
+    }
+  }
+  $argcounter++;
+}
+
+
+function cforge_custom_imagecache_default_presets() {
+  return array(
+    'user_image_default' => array (
+      'presetname' => 'user_image_default',
+      'actions' => array (
+        0 => array (
+          'weight' => '0',
+          'module' => 'imagecache',
+          'action' => 'imagecache_scale_and_crop',
+          'data' => array (
+            'width' => '80',
+            'height' => '80',
+          ),
+        ),
+      ),
+    ),
+    'user_image_large' => array (
+      'presetname' => 'user_image_large',
+      'actions' => array (
+        0 => array (
+          'weight' => '0',
+          'module' => 'imagecache',
+          'action' => 'imagecache_scale_and_crop',
+          'data' => array (
+            'width' => '150',
+            'height' => '150',
+          ),
+        ),
+      ),
+    )
+  );
+}
+
+/*
+//clear all users for reimporting
+$result = db_query("select uid from users where uid >1");
+while ($uid = db_result($result)){
+  user_delete(array(), $uid);
+}
+//delete all nodes of type transaction
+$result = db_query("select nid from node where type = 'transaction'");
+while ($nid = db_result($result)){
+  node_delete($nid);
+}
+
+//HARD RESET THE SITE - must be followed by reinstalling cforge_custom
+$result = db_query("select nid from node");
+while ($nid = db_result($result)){
+  node_delete($nid);
+}
+db_query("TRUNCATE TABLE {node}");
+db_query("TRUNCATE TABLE {node_revisions}");
+db_query("TRUNCATE TABLE {profile_values}");
+db_query("TRUNCATE TABLE {profile_fields}");
+db_query("DELETE FROM {cc_transactions} WHERE state = -1");
+//don't forget to reset auto increment on {users} before or after reinstalling
+*/
+
+function cforge_user_autocomplete($string = '') {
+  $matches = array();
+  if ($string) {
+    $result = db_query(
+      "SELECT DISTINCT u.uid, name FROM {users} u
+      LEFT JOIN {profile_values} v ON u.uid = v.uid
+      LEFT JOIN {users_roles} ur ON u.uid = ur.uid
+      WHERE u.status = 1 AND u.uid > 0 AND rid = ".RID_TRADER." AND (
+        LOWER(u.name) LIKE LOWER('%s%%')
+        OR LOWER(u.mail) LIKE LOWER('%s%%')
+        OR LOWER(v.value) LIKE LOWER('%s%%')
+        OR u.uid LIKE ('%s%%')
+      )",
+      array(':name' => $string, ':email' => $string, ':value' => $string, ':uid' => $string)
+    );
+    $traders = get_trader_list();
+    while ($user = db_fetch_object($result)) {
+      $matches[$user->name] = $traders[$user->uid];
+    }
+  }
+  drupal_json(array_splice($matches, 0, 10));
+}
+
+//I think this function is no longer required
+function phptemplate_menu_overview_form($form) {
+  drupal_add_tabledrag('menu-overview', 'match', 'parent', 'menu-plid', 'menu-plid', 'menu-mlid', TRUE, MENU_MAX_DEPTH - 1);
+  drupal_add_tabledrag('menu-overview', 'order', 'sibling', 'menu-weight');
+
+  $header = array(
+    t('Menu item'),
+    array('data' => t('Enabled'), 'class' => 'checkbox'),
+    array('data' => t('Expanded'), 'class' => 'checkbox'),
+    t('Weight'),
+  );
+  if($GLOBALS['user']->uid ==1)$header[] = array('data' => t('Operations'), 'colspan' => '3');
+
+  $rows = array();
+  foreach (element_children($form) as $mlid) {
+    if (isset($form[$mlid]['hidden'])) {
+      $element = &$form[$mlid];
+      // Build a list of operations.
+      $operations = array();
+      foreach (element_children($element['operations']) as $op) {
+        $operations[] = drupal_render($element['operations'][$op]);
+      }
+      while (count($operations) < 2) {
+        $operations[] = '';
+      }
+
+      // Add special classes to be used for tabledrag.js.
+      $element['plid']['#attributes']['class'] = 'menu-plid';
+      $element['mlid']['#attributes']['class'] = 'menu-mlid';
+      $element['weight']['#attributes']['class'] = 'menu-weight';
+
+      // Change the parent field to a hidden. This allows any value but hides the field.
+      $element['plid']['#type'] = 'hidden';
+
+      $row = array();
+      $row[] = theme('indentation', $element['#item']['depth'] - 1) . drupal_render($element['title']);
+      $row[] = array('data' => drupal_render($element['hidden']), 'class' => 'checkbox');
+      $row[] = array('data' => drupal_render($element['expanded']), 'class' => 'checkbox');
+      $row[] = drupal_render($element['weight']) . drupal_render($element['plid']) . drupal_render($element['mlid']);
+      if (user_access('administer menu')) $row = array_merge($row, $operations);
+
+      $row = array_merge(array('data' => $row), $element['#attributes']);
+      $row['class'] = !empty($row['class']) ? $row['class'] .' draggable' : 'draggable';
+      $rows[] = $row;
+    }
+  }
+  if ($rows) {
+    $output .= theme('table', $header, $rows, array('id' => 'menu-overview'));
+  }
+  $output .= drupal_render($form);
+  return $output;
+}
+
+
+function cforge_dump() {
+  $db = $_SERVER['db_name'];
+  $pswd = $_SERVER['db_passwd'];
+  echo system("mysqldump --user root --password=$pswd $db");
+}
+
+
+//sets the base theme of the cforge_subtheme to the variable set in the cforge_subtheme's settings
+function cforge_custom_system_info_alter(&$info) {
+  if ($info['name'] != t('Community forge subtheme')) return;
+  $other = db_result(db_query("SELECT name FROM {system} WHERE type = 'theme' AND status = 1 AND name <> 'cforge_subtheme'"));
+  if ($other) {
+    $info['base_theme'] = $other;
+    $info['description'] = str_replace('Garland', $other, $info['description']);
+  }
+  else {
+    drupal_set_message(t('Another theme should be enabled as the base for cforge_subtheme another'), 'error');
+  }
+}
+
+global $conf;
+$conf['i18n_variables'] = array(
+  'site_name',
+  'site_slogan',
+  'anonymous',
+  'contact_form_information',
+  'user_mail_password_reset_body',
+  'user_mail_password_reset_subject',
+  'user_mail_register_admin_created_body',
+  'user_mail_register_admin_created_subject',
+  'user_mail_register_no_approval_required_body',
+  'user_mail_register_no_approval_required_subject',
+  'user_mail_register_pending_approval_body',
+  'user_mail_register_pending_approval_subject',
+  'user_mail_status_activated_body',
+  'user_mail_status_activated_subject',
+  'user_mail_status_blocked_body',
+  'user_mail_status_blocked_subject',
+  'user_mail_status_deleted_body',
+  'user_mail_status_deleted_subject',
+);
+
+/*
+ * This should be called from devel/php
+ * shouldn't do any harm
+ * not intended for sites where user 1 access has been granted
+ */
+function cforge_restore() {
+  module_load_include('install', 'cforge_custom');
+  cforge_menu_items();
+  cforge_profile_fields();
+  reset_blocks();
+  drupal_set_message('cforge_restore() has restored the menu items, the profile fields, and the block visibilities');
+}
+
+function cforge_nothing() {
+  //this is just for the translator to pick up
+   t('Gallery');
+}
+
+//protect certain fields from being inadvertantly included in views
+function cforge_custom_views_pre_render(&$view) {
+  if (user_access('access user profiles')) return;
+  $private = array(
+    'users_picture' => '',
+    'users_mail' => variable_get('site_mail', 'blah'),
+    'users_name' => ''
+  );
+  foreach ($private as $field => $value) {
+    foreach ($view->result as $key=>$row) {
+      $view->result[$key]->$field = $value;
+    }
+  }
+}
+
+
+function cforge_custom_refresh() {
+  module_load_include('install', 'cforge_custom');
+  cforge_reset_blocks();
+  cforge_reset_permissions();
+  cforge_menu_items();
+  cforge_profile_fields();
+}
+
+function cforge_username($account) {
+  $name = strip_tags(theme('username', $account));
+  if ($account->profile_responsibility) {
+    $name .= '<br />('. $account->profile_responsibility .')';
+  }
+  return $name;
+}

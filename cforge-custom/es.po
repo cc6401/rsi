@@ -1,0 +1,889 @@
+# $Id$
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  cforge_custom.views.inc: n/a
+#  cforge_custom.module: n/a
+#  cforge_custom.install: n/a
+#  cforge_custom.info: n/a
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2010-10-21 02:43+0200\n"
+"PO-Revision-Date: 2010-10-22 19:54+0100\n"
+"Last-Translator: Jorge <jwienken@gmail.com>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"X-Poedit-Bookmarks: 120,5,181,-1,-1,186,183,-1,84,-1\n"
+
+#: cforge_custom.views.inc:19
+msgid "Add an offer"
+msgstr "Añadir una oferta"
+
+#: cforge_custom.views.inc:20
+msgid "Add a want"
+msgstr "Añadir una demanda"
+
+#: cforge_custom.views.inc:21
+msgid "Start a transaction"
+msgstr "Comenzar una transacción"
+
+#: cforge_custom.views.inc:23
+msgid "Add a contribution"
+msgstr "Añadir una contribución"
+
+#: cforge_custom.views.inc:27
+msgid "Contributions to do and Contributions completed"
+msgstr "Contribuciones para hacer y Contribuciones completadas"
+
+#: cforge_custom.views.inc:87
+msgid "Completer"
+msgstr "Completador"
+
+#: cforge_custom.views.inc:171
+msgid "Community Tasks"
+msgstr "Tareas de la comunidad"
+
+#: cforge_custom.views.inc:172
+msgid "No contributions have been posted yet"
+msgstr "No ha sido publicada aún ninguna contribución"
+
+#: cforge_custom.views.inc:245;512
+msgid "No Contributions have been completed"
+msgstr "No ha sido completada ninguna contribución"
+
+#: cforge_custom.views.inc:294;303
+msgid "Commitments"
+msgstr "Compromisos"
+
+#: cforge_custom.views.inc:306
+msgid "You have not committed to any task."
+msgstr "No te has comprometido a ninguna tarea."
+
+#: cforge_custom.views.inc:402
+msgid "Tasks"
+msgstr "Tareas"
+
+#: cforge_custom.views.inc:509
+msgid "Acknowlegements"
+msgstr "Reconocimientos"
+
+#: cforge_custom.views.inc:686
+msgid "Activities"
+msgstr "Actividades"
+
+#: cforge_custom.views.inc:805
+msgid "Upcoming"
+msgstr "Al llegar"
+
+#: cforge_custom.views.inc:880
+msgid "Directory Entries by published date"
+msgstr "Entradas del directorio por fecha de publicación"
+
+#: cforge_custom.views.inc:945;1175;1360;1404
+msgid "Offers"
+msgstr "Ofertas"
+
+#: cforge_custom.views.inc:988
+msgid "offer"
+msgstr "oferta"
+
+#: cforge_custom.views.inc:989
+msgid "want"
+msgstr "demanda"
+
+#: cforge_custom.views.inc:1026
+msgid "Recent Offers & Wants"
+msgstr "Ofertas & Demandas recientes"
+
+#: cforge_custom.views.inc:1027
+msgid "Directory entries, newest first"
+msgstr "Entradas del directorio, las más recientes primero"
+
+#: cforge_custom.views.inc:1033
+msgid "No entries in this category"
+msgstr "No hay entradas en esta categoría"
+
+#: cforge_custom.views.inc:1080
+msgid "Offers by published date"
+msgstr "Ofertas por fecha de publicación"
+
+#: cforge_custom.views.inc:1090
+msgid "Category"
+msgstr "Categoría"
+
+#: cforge_custom.views.inc:1099
+msgid "Description of offer"
+msgstr "Descripción de la oferta"
+
+#: cforge_custom.views.inc:1143;2125;3023
+#: cforge_custom.module:359
+msgid "Created"
+msgstr "Creado"
+
+#: cforge_custom.views.inc:1174;1359;1666;1838
+msgid "All"
+msgstr "Todo"
+
+#: cforge_custom.views.inc:1266
+msgid "Recent Offers"
+msgstr "Ofertas recientes"
+
+#: cforge_custom.views.inc:1272
+msgid "There are no offers in this category"
+msgstr "No hay ofertas en esta categoría"
+
+#: cforge_custom.views.inc:1397
+msgid "Offers: Recent"
+msgstr "Ofertas: Reciente"
+
+#: cforge_custom.views.inc:1591
+msgid "Wants by published date"
+msgstr "Demandas por fecha de publicación"
+
+#: cforge_custom.views.inc:1601
+msgid "Description of need"
+msgstr "Descripción de la demanda"
+
+#: cforge_custom.views.inc:1613
+msgid "of"
+msgstr "de"
+
+#: cforge_custom.views.inc:1625
+msgid "added"
+msgstr "añadido"
+
+#: cforge_custom.views.inc:1745;1746;1839;1876;1883
+msgid "Wants"
+msgstr "Demandas"
+
+#: cforge_custom.views.inc:1752
+msgid "There are no wants in this category"
+msgstr "No hay demandas en esta categoría"
+
+#: cforge_custom.views.inc:2094
+msgid "Shows all my offers/wants in a user's directory"
+msgstr "Muestra todas mis ofertas/demandas en un directorio de usuario"
+
+#: cforge_custom.views.inc:2116
+msgid "Description"
+msgstr "Descripción"
+
+#: cforge_custom.views.inc:2145
+msgid "Delete"
+msgstr "Eliminar"
+
+#: cforge_custom.views.inc:2275
+msgid "Offers/Wants"
+msgstr "Ofertas/Demandas"
+
+#: cforge_custom.views.inc:2291
+msgid "transactions from all users"
+msgstr "transacciones de todos los usuarios"
+
+#: cforge_custom.views.inc:2301
+msgid "Paid by"
+msgstr "Pagado por"
+
+#: cforge_custom.views.inc:2318
+msgid "This member"
+msgstr "Este miembro"
+
+#: cforge_custom.views.inc:2327
+msgid "did this for"
+msgstr "hizo esto para"
+
+#: cforge_custom.views.inc:2336
+msgid "this member"
+msgstr "este miembro"
+
+#: cforge_custom.views.inc:2353
+msgid "Confirm?"
+msgstr "¿Confirmar?"
+
+#: cforge_custom.views.inc:2423
+msgid "Exchanges by member"
+msgstr "Intercambios por miembro"
+
+#: cforge_custom.views.inc:2424
+msgid "<a href=\"transaction/add\">Start a transaction></a>"
+msgstr "<a href=\"transaction/add\">Comenzar una transacción></a>"
+
+#: cforge_custom.views.inc:2428
+msgid "There have yet to be any trades"
+msgstr "Aún no hay ninguna transacción"
+
+#: cforge_custom.views.inc:2518
+msgid "Recent Transactions"
+msgstr "Transacciones recientes"
+
+#: cforge_custom.views.inc:2536
+msgid "Member"
+msgstr "Miembro"
+
+#: cforge_custom.views.inc:2569
+msgid "did this exchange"
+msgstr "realizó este intercambio"
+
+#: cforge_custom.views.inc:2578;5408
+#: cforge_custom.module:151
+msgid "with"
+msgstr "con"
+
+#: cforge_custom.views.inc:2626;2673;5399
+#: cforge_custom.module:51
+msgid "Transactions"
+msgstr "Transacciones"
+
+#: cforge_custom.views.inc:2663
+msgid "Recent: Transactions"
+msgstr "Reciente: Transacciones"
+
+#: cforge_custom.views.inc:2919;2933
+msgid "Images"
+msgstr "Imágenes"
+
+#: cforge_custom.views.inc:2960;3179
+msgid "Title"
+msgstr "Título"
+
+#: cforge_custom.views.inc:3127
+msgid "Documents"
+msgstr "Documentos"
+
+#: cforge_custom.views.inc:3128
+msgid "No documents have been uploaded yet"
+msgstr "No se han subido documentos aún"
+
+#: cforge_custom.views.inc:3165
+msgid "Community documentation"
+msgstr "Documentación de la comunidad"
+
+#: cforge_custom.views.inc:3493
+msgid "Post Code"
+msgstr "Código postal"
+
+#: cforge_custom.views.inc:3526
+msgid "since"
+msgstr "desde"
+
+#: cforge_custom.views.inc:3560
+msgid "Email"
+msgstr "Email"
+
+#: cforge_custom.views.inc:3593
+msgid "Balance"
+msgstr "Saldo"
+
+#: cforge_custom.views.inc:3625
+msgid "Gross Income"
+msgstr "Ingreso bruto"
+
+#: cforge_custom.views.inc:3657
+msgid "Acknowledgements"
+msgstr "Reconocimientos"
+
+#: cforge_custom.views.inc:3731;4861;5315
+msgid "Member list"
+msgstr "Lista de miembros"
+
+#: cforge_custom.views.inc:3812;3908;3938
+#: cforge_custom.install:297
+msgid "First name"
+msgstr "Nombre"
+
+#: cforge_custom.views.inc:3853;3964;3992
+#: cforge_custom.install:301
+msgid "Family name"
+msgstr "Apellido"
+
+#: cforge_custom.views.inc:3883;3890
+msgid "Members"
+msgstr "Miembros"
+
+#: cforge_custom.views.inc:4177
+msgid "System accounts"
+msgstr "Cuentas del sistema"
+
+#: cforge_custom.views.inc:4586
+msgid "Contributions"
+msgstr "Contribuciones"
+
+#: cforge_custom.views.inc:4712
+msgid "addresses to csv"
+msgstr "direcciones a csv"
+
+#: cforge_custom.views.inc:4921
+msgid "Latest story in full, with list of stories"
+msgstr "Última historia completa, con la lista de historias"
+
+#: cforge_custom.views.inc:5028
+msgid "Previous articles"
+msgstr "Artículos previos"
+
+#: cforge_custom.views.inc:5083
+msgid "Promoted to the front page"
+msgstr "Promocionado a la portada"
+
+#: cforge_custom.views.inc:5105
+msgid "News"
+msgstr "Noticias"
+
+#: cforge_custom.views.inc:5122
+msgid "expiry dates"
+msgstr "fechas de caducidad"
+
+#: cforge_custom.views.inc:5166
+msgid "Name"
+msgstr "Nombre"
+
+#: cforge_custom.views.inc:5193
+msgid "Telephone Number "
+msgstr "Número de teléfono"
+
+#: cforge_custom.views.inc:5217
+msgid "Last login"
+msgstr "Último login"
+
+#: cforge_custom.views.inc:5243
+msgid "to confirm"
+msgstr "por confirmar"
+
+#: cforge_custom.views.inc:5377
+msgid "show transaction from or to a user"
+msgstr "mostrar transacción desde o hacia un usuario"
+
+#: cforge_custom.views.inc:5417
+msgid "description"
+msgstr "descripción"
+
+#: cforge_custom.views.inc:5561
+msgid "Transactions by user"
+msgstr "Transacciones por usuario"
+
+#: cforge_custom.views.inc:5563
+msgid "You haven't completed any transactions yet"
+msgstr "No has completado aún ninguna transacción"
+
+#: cforge_custom.module:72
+msgid "My account"
+msgstr "Mi cuenta"
+
+#: cforge_custom.module:74
+msgid "Account"
+msgstr "Cuenta"
+
+#: cforge_custom.module:149
+msgid "I traded"
+msgstr "Yo comercié"
+
+#: cforge_custom.module:153
+msgid "and"
+msgstr "y"
+
+#: cforge_custom.module:160
+msgid "The name of your community"
+msgstr "El nombre de tu comunidad"
+
+#: cforge_custom.module:161
+msgid "This cannot be changed, without also changing the site name in communityforge.net, because this is how the site is identified with the cforge_user"
+msgstr "Esto no se puede cambiar sin cambiar también el nombre del sitio en communityforge.net, porque es así como el sitio se identifica con el cforge_user"
+
+#: cforge_custom.module:173
+msgid "Slogan shows next to the site name"
+msgstr "El eslogan se muestra a continuación del nombre del sitio"
+
+#: cforge_custom.module:174
+msgid "Physical address(es)"
+msgstr "Dirección(es) física(s)"
+
+#: cforge_custom.module:175
+msgid "Where do you hold most of your meetings?"
+msgstr "¿Dónde mantienes la mayoría de tus encuentros? "
+
+#: cforge_custom.module:179
+msgid "Site email"
+msgstr "Email del sitio"
+
+#: cforge_custom.module:180
+msgid "Enter the email address of the person who will be managing membership within your scheme."
+msgstr "Introduce la dirección email de la persona que gestionará a los miembros dentro de tu esquema."
+
+#: cforge_custom.module:198
+msgid "Password"
+msgstr "Contraseña"
+
+#: cforge_custom.module:252
+#: cforge_custom.install:297;301;305;309;313;317;321;325;329
+msgid "Details"
+msgstr "Detalles"
+
+#: cforge_custom.module:275
+msgid "Jumpdown links"
+msgstr "Links de salto hacia abajo"
+
+#: cforge_custom.module:279
+msgid "Cforge Footer"
+msgstr "Mensaje al pie de Cforge"
+
+#: cforge_custom.module:282
+msgid "Transaction categories"
+msgstr "Categorías de transacción"
+
+#: cforge_custom.module:293
+msgid "On this page..."
+msgstr "En esta página..."
+
+#: cforge_custom.module:299
+msgid "Designed and hosted by !CommunityForge, a non-profit association registered in Geneva, Switzerland."
+msgstr "Diseñado y alojado por !CommunityForge, un asociación sin ánimo de lucro registrada en Ginebra, Suiza."
+
+#: cforge_custom.module:303
+msgid "Categorised transactions"
+msgstr "Transacciones categorizadas"
+
+#: cforge_custom.module:380
+msgid "unrecognised strtotime format for user @uid created date: @date"
+msgstr "formato strtotime no reconocido para la fecha creada: @date por el usuario @uid"
+
+#: cforge_custom.module:392
+msgid "Balances"
+msgstr "Saldos"
+
+#: cforge_custom.module:399
+msgid "Balance Chart"
+msgstr "Gráfico de saldos"
+
+#: cforge_custom.module:404
+msgid "Balance limits"
+msgstr "Límites de saldo"
+
+#: cforge_custom.module:449
+msgid "Newsletter"
+msgstr "Boletín de noticias"
+
+#: cforge_custom.module:450
+msgid "Unable to identify newsletter tag"
+msgstr "Imposible identificar la etiqueta del boletín de noticias"
+
+#: cforge_custom.module:498;504
+msgid "You must enter a whole number"
+msgstr "Debes introducir un número entero"
+
+#: cforge_custom.module:501
+msgid "Minimum balance must not be larger than 0"
+msgstr "El saldo mínimo no debe ser mayor de 0"
+
+#: cforge_custom.module:507
+msgid "Maximum balance must be an integer larger than zero and minimum balance"
+msgstr "El saldo máximo debe ser un entero mayor de cero y del saldo mínimo"
+
+#: cforge_custom.module:532
+msgid "Compose your newsletter and choose which group it should be sent to. Members can sign up to newsletters on the front page"
+msgstr "Crea tu boletín de noticias y elige a qué grupo debería enviarse. Los miembros pueden darse de alta en los boletines en la página principal"
+
+#: cforge_custom.module:535
+msgid "This is a list of users with the role 'system'. Go to the user's edit page to set roles."
+msgstr "Hay una lista de usuarios con el rol de 'sistema'. Ve a la página de edición de usuarios para establecer los roles."
+
+#: cforge_custom.module:538
+msgid "Choose the letter of the surname of the member you are trying to find below and/or sort by column to find an e-member quickly."
+msgstr "Elige abajo la letra del apellido del miembro que buscas  y/o ordenar por columna para encontrar un miembro rápidamente."
+
+#: cforge_custom.module:539
+msgid "Once on a member's page, you can easily enter a trade with them using the using the block to the left."
+msgstr "Una vez en la página de un miembro, puedes fácilmente entrar en una trasacción suya usando el bloque de la izquierda."
+
+#: cforge_custom.module:543
+msgid "< refine your search by using the categories shown on the left."
+msgstr "< refina tu búsqueda usando las categorías mostradas a la izquierda."
+
+#: cforge_custom.module:546
+msgid "Votre Contribution à l'association compte. Voici la liste des petits 'coups de mains' que vous pouvez entreprendre pour contribuer."
+msgstr "Tu Contribución a la asociación cuenta. Mira la lista de pequeñas acciones que puedes llevar a cabo para contribuir."
+
+#: cforge_custom.module:547
+msgid "Pour vous porter volontaire, cliquez sur le bouton 'Cliquez ici pour entreprendre cette Contribution"
+msgstr "Para hacerte voluntario, clica en el boton 'Clique aquí para realizar esta Contribución'"
+
+#: cforge_custom.module:548
+msgid "Une fois la Contribution accomplie, veuillez avertir un membre du comité afin de recevoir votre point 'Contribution'."
+msgstr "Una vez realizada la Contribución, puedes informar a un miembro del comité para recibir tu punto 'Contribución'. "
+
+#: cforge_custom.module:549
+msgid "L'association vous remercie"
+msgstr "La asociación agradece tu colaboración"
+
+#: cforge_custom.module:569
+msgid "Design your classification system here. Create new categories and put them in order."
+msgstr "Diseña tu sistema de clasificación aquí. Crea nuevas categorías y ponlas en orden."
+
+#: cforge_custom.module:570
+msgid "The last category is a 'catch-all', so it must be 'miscellaneous', or 'other'"
+msgstr "La última categoría recoge todo lo no clasificado, así que debe ser nombrada 'miscelánea' o 'otros'"
+
+#: cforge_custom.module:575
+msgid "Rearrange the menu items here by dragging them. Create and delete menu items when you edit the pages themselves"
+msgstr "Reorganiza aquí los elementos del menu arrastrándolos. Crea y elimina elementos del menú cuando edites las propias páginas."
+
+#: cforge_custom.module:580
+msgid "Database name: "
+msgstr "Nombre de la base de datos:"
+
+#: cforge_custom.module:710
+msgid "Menu item"
+msgstr "Elemento del menú"
+
+#: cforge_custom.module:711
+msgid "Enabled"
+msgstr "Habilitado"
+
+#: cforge_custom.module:712
+msgid "Expanded"
+msgstr "Expandido"
+
+#: cforge_custom.module:713
+msgid "Weight"
+msgstr "Peso"
+
+#: cforge_custom.module:715
+msgid "Operations"
+msgstr "Operaciones"
+
+#: cforge_custom.module:750
+msgid "Rearrange the menu items here by dragging them. Create and delete menu items when you edit the pages themselves."
+msgstr "Reorganiza aquí los elementos del menu arrastrándolos. Crea y elimina elementos del menú cuando edites las propias páginas."
+
+#: cforge_custom.module:66
+msgid "local admin"
+msgstr "Administrador local"
+
+#: cforge_custom.module:66
+msgid "committee"
+msgstr "comité"
+
+#: cforge_custom.module:52
+msgid "All your transactions"
+msgstr "Todas tus transacciones"
+
+#: cforge_custom.install:56;843
+msgid "Article"
+msgstr "Artículo"
+
+#: cforge_custom.install:69
+msgid "Document types"
+msgstr "Tipos de documento"
+
+#: cforge_custom.install:70;71
+msgid "Choose a category to make this page appear on the documents page"
+msgstr "Elige una categoría para que esta página aparezca en la página de documentos"
+
+#: cforge_custom.install:104
+msgid "Visitors"
+msgstr "Visitantes"
+
+#: cforge_custom.install:104
+msgid "For anonymous users"
+msgstr "Para usuarios anónimos"
+
+#: cforge_custom.install:105
+msgid "Setup"
+msgstr "Configuración"
+
+#: cforge_custom.install:105
+msgid "Switch off this block in your user profile"
+msgstr "Desconectar este bloque en tu perfil de usuario"
+
+#: cforge_custom.install:106
+msgid "Manage"
+msgstr "Organizar"
+
+#: cforge_custom.install:106
+msgid "Links for the day to day administration of the site"
+msgstr "Links para la administración del día a día del sitio web"
+
+#: cforge_custom.install:115
+msgid "@scheme activities"
+msgstr "Actividades de @scheme"
+
+#: cforge_custom.install:120;782;824
+msgid "My pending transactions"
+msgstr "Mis transacciones pendientes"
+
+#: cforge_custom.install:121;783;825
+msgid "Pending transactions"
+msgstr "Trasacciones pendientes"
+
+#: cforge_custom.install:127
+msgid "LETS life"
+msgstr "Vida LETS"
+
+#: cforge_custom.install:252;902
+msgid "Original"
+msgstr "Original"
+
+#: cforge_custom.install:259;909
+msgid "Vignette"
+msgstr "Viñeta"
+
+#: cforge_custom.install:266;916
+msgid "Preview"
+msgstr "Vista previa"
+
+#: cforge_custom.install:305
+msgid "Responsibility"
+msgstr "Responsabilidad"
+
+#: cforge_custom.install:305
+msgid "Job title, for committee members only"
+msgstr "Cargo en el trabajo, sólo para miembros del comité"
+
+#: cforge_custom.install:309
+msgid "Phone Number 1"
+msgstr "Número de teléfono 1"
+
+#: cforge_custom.install:313
+msgid "Phone Number 2"
+msgstr "Número de teléfono 2"
+
+#: cforge_custom.install:317
+msgid "Area Code"
+msgstr "Código de área"
+
+#: cforge_custom.install:317
+msgid "This may be the zip code, or some other way to group the members geographically"
+msgstr "Esto puede ser el código zip, o algún otro modo de agrupar a los miembros geográficamente"
+
+#: cforge_custom.install:321
+msgid "Postal member"
+msgstr "Miembro postal"
+
+#: cforge_custom.install:321
+msgid "Please post printed directories to me "
+msgstr "Por favor, enviarme por correo directorios impresos"
+
+#: cforge_custom.install:325
+msgid "Address"
+msgstr "Dirección"
+
+#: cforge_custom.install:325
+msgid "This is necessary if you want to receive printed updates"
+msgstr "Esto es necesario si quieres recibir actualizaciones impresas"
+
+#: cforge_custom.install:329
+msgid "Notes"
+msgstr "Notas"
+
+#: cforge_custom.install:329
+msgid "This is for any additional notes."
+msgstr "Esto es para mis notas adicionales."
+
+#: cforge_custom.install:362;366
+msgid "This is an automated notification."
+msgstr "Esta es una notificación automática."
+
+#: cforge_custom.install:363;367
+msgid "%starter has started a transaction with %completer"
+msgstr "%starter ha comenzado una transacción con %completer"
+
+#: cforge_custom.install:364;368
+msgid "The transaction was for: %reason"
+msgstr "La transacción fue para: %reason"
+
+#: cforge_custom.install:365;370
+msgid "You can change your mail notification settings by clicking 'edit' on your profile"
+msgstr "Puedes cambiar las opciones de notificación de tu correo clicando 'editar' en tu perfil"
+
+#: cforge_custom.install:369
+msgid "You can confirm the transaction from your profile page: %profile_url"
+msgstr "Puedes confirmar la transacción desde tu página de perfil: %profile_url"
+
+#: cforge_custom.install:381;390
+msgid "Transaction notification"
+msgstr "Notificación de transacción"
+
+#: cforge_custom.install:383
+msgid "Mail the starter of the transaction"
+msgstr "Enviar el iniciador de la transacción"
+
+#: cforge_custom.install:392
+msgid "Mail the completer of the transaction"
+msgstr "Enviar el finalizador de la transacción"
+
+#: cforge_custom.install:403;730
+msgid "This is to prevent robots creating accounts"
+msgstr "Esto es para prevenir que los robots creen cuentas"
+
+#: cforge_custom.install:442
+msgid "Change basic site information, such as the site name, slogan, e-mail address, mission, front page and more."
+msgstr "Cambiar la información básica del sitio web, tal como el nombre del sitio, el eslogan, la dirección de email, la misión, la portada y más."
+
+#: cforge_custom.install:450
+msgid "Upload Logo"
+msgstr "Subir el Logo"
+
+#: cforge_custom.install:455
+msgid "Upload the main picture in the top left of the screen"
+msgstr "Subir la imagen principal de la zona superior izquierda de la pantalla"
+
+#: cforge_custom.install:462
+msgid "Default currency"
+msgstr "Moneda por defecto"
+
+#: cforge_custom.install:467
+msgid "Setup a default currency, transaction and directory settings."
+msgstr "Estable una moneda por defecto, y las opciones de transacción y directorio."
+
+#: cforge_custom.install:474
+msgid "Welcome email"
+msgstr "Email de bienvenida"
+
+#: cforge_custom.install:479
+msgid "Compose the e-mail to be sent on welcoming user."
+msgstr "Redacta el email de bienvenida a enviar a un usuario. "
+
+#: cforge_custom.install:488
+msgid "Starter email"
+msgstr "Email del iniciador"
+
+#: cforge_custom.install:493
+msgid "Compose the e-mail sent to a user who needs to confirm a transaction."
+msgstr "Redacta el email a enviar a un usuario que necesita confirmar una trasacción."
+
+#: cforge_custom.install:500
+msgid "Completer email"
+msgstr "Email del completador"
+
+#: cforge_custom.install:505
+msgid "Compose the e-mail sent to a member who started a transaction."
+msgstr "Redacta el email a enviar a un miembro que comenzó una transacción."
+
+#: cforge_custom.install:512
+msgid "Contact form"
+msgstr "Formulario de contacto"
+
+#: cforge_custom.install:517
+msgid "Setup up site wide & member contacts."
+msgstr "Configura el sitio web & los contactos de los miembros"
+
+#: cforge_custom.install:531
+msgid "Manage the contents of a page"
+msgstr "Organizar los contenidos de una página"
+
+#: cforge_custom.install:538
+msgid "User management"
+msgstr "Organización de usuario"
+
+#: cforge_custom.install:543
+msgid "List, add and modify users"
+msgstr "Listar, añadir y modificar usuarios"
+
+#: cforge_custom.install:550
+msgid "Manage Galleries"
+msgstr "Organizar la Galerías de imágenes"
+
+#: cforge_custom.install:555
+msgid "Create and manage image galleries"
+msgstr "Crear y organizar las galerías de imágenes"
+
+#: cforge_custom.install:563
+msgid "Categories"
+msgstr "Categorías"
+
+#: cforge_custom.install:568
+msgid "The categories of your offers and wants"
+msgstr "Las categorias de tus ofertas y demandas"
+
+#: cforge_custom.install:576
+msgid "Document Types"
+msgstr "Tipos de documento"
+
+#: cforge_custom.install:581
+msgid "Categories for your documents"
+msgstr "Categorías para tus documentos"
+
+#: cforge_custom.install:588
+msgid "Visitor menu"
+msgstr "Menu de visitante"
+
+#: cforge_custom.install:593
+msgid "Manage contents of the menu for anonymous users."
+msgstr "Organizar los contenidos del menú para usuarios anónimos."
+
+#: cforge_custom.install:600
+msgid "Major menu"
+msgstr "Menú mayor"
+
+#: cforge_custom.install:605
+msgid "Manage the primary members menu, organising offers, wants, etc."
+msgstr "Organizar el menú primario de los miembros, organizando las ofertas, demandas, etc."
+
+#: cforge_custom.install:612
+msgid "Minor menu"
+msgstr "Menú menor"
+
+#: cforge_custom.install:617
+msgid "Manage secondary member options, contact, galleries, etc."
+msgstr "Organizar las opciones secundarias de los miembros, contacto, galerías de imágenes, etc."
+
+#: cforge_custom.install:626
+msgid "Newsletter content"
+msgstr "Contenido del boletín de noticias"
+
+#: cforge_custom.install:631
+msgid "Manage newsletter content, subscriptions, etc."
+msgstr "Organizar el contenido del boletín de noticias, las subscripciones, etc."
+
+#: cforge_custom.install:738
+msgid "Sending mail"
+msgstr "Enviando mail"
+
+#: cforge_custom.install:743
+msgid "Configure your site's outgoing mail server."
+msgstr "Configura el servidor de correo saliente de tu sitio web."
+
+#: cforge_custom.install:757
+msgid "Offer"
+msgstr "Oferta"
+
+#: cforge_custom.install:758
+msgid "Want"
+msgstr "Demanda"
+
+#: cforge_custom.install:759;844
+msgid "Event"
+msgstr "Evento"
+
+#: cforge_custom.install:760
+msgid "Newsletter Issue"
+msgstr "Entrega del boletín de noticias"
+
+#: cforge_custom.install:761
+msgid "Story"
+msgstr "Historia"
+
+#: cforge_custom.install:762
+msgid "Document"
+msgstr "Documento"
+
+#: cforge_custom.install:763
+msgid "Contribution"
+msgstr "Contribución"
+
+#: cforge_custom.info:0
+msgid "Cforge custom"
+msgstr "Configuración de Cforge"
+
+#: cforge_custom.info:0
+msgid "Community Forge default installation. If your scheme would like to have customisation, please contact us."
+msgstr "Instalación por defecto de Community Forge. Si quieres personalizar tu esquema, por favor contacta con nosotros."
+
+#: cforge_custom.info:0
+msgid "Complementary Currencies"
+msgstr "Monedas complementarias"
+

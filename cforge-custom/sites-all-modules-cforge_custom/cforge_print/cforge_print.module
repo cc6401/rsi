@@ -1,0 +1,270 @@
+<?php
+// $Id$
+define('CFORGE_PRINT_LINES', 40);
+
+/**
+ * @defgroup prints lists of nodes for the mutual credit module 
+ *
+ * This module adds links to printer-friendly pages for wants-, offers- 
+ * and member-lists of the mutual credit module, see 
+ * http://drupal.org/project/mutual_credit
+ *
+ * The module is very close to the print module, which prints printer-friendly pages 
+ * for general pages. 
+ *
+ * In further release it will have to consider whether the print module is loaded too,
+ * in order to avoid confusion for the site visitor who might find two print buttons with
+ * different behaviours for some view pages as the cforge_print module is now.
+ * 
+ * - Printer-friendly pages for the mutual credit module 
+ *   - @link cforge_print.module Module main file @endlink
+ *   - @link cforge_print.tpl.php Page generation template @endlink 
+ *   
+*/
+
+function cforge_print_theme() {
+  return array(
+   'cforge_paginate' => array(
+      'function' => 'theme_cforge_paginate',
+      'arguments' => array(
+        'rows' => array(),
+        'headings' => array()
+      )
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_help(). 
+ * Since a print button is to be added in views not nodes hook_help must is used instead of hook_link.
+ * this applies to the following paths:
+ * /members
+ * /directory/recent/%optional_term
+ * /directory/recent_offers/%optional_term
+ * /directory/recent_wants/%optional_term
+ */
+function cforge_print_help($path, $args) {
+  if (!$GLOBALS['user']->uid)return;
+  if ($args[0] == "directory"){
+    $type = $args[1];
+  }
+  elseif($args[0] == 'members') {
+    $type = 'members';
+  }
+  else return;
+  
+  switch ($args[1]) {
+    case '':
+      $type = 'members';
+      break;
+    case 'recent':
+      $type = 'both';
+      break;
+    case 'recent_offers':
+      $type = 'offer';
+      break;
+    case 'recent_wants':
+      $type = 'want';
+      break;
+  }
+  $category = $args[2] or $category = 'all';
+  $img = theme_image(drupal_get_path('module', 'cforge_print') .'/print_icon.gif',
+    t('Printer-friendly version'),
+    t('Printer-friendly version'),
+    array('class' => 'print-icon')
+  );
+  $path = 'print/' . $type .'/'. $category;
+  $options = array(
+      'attributes' => array(
+        'class' => "onclick='window.open(this.href); return false",
+       'rel' => 'nofollow'
+      ),
+      'html' => TRUE
+    );
+  return l($img, $path, $options) .' '. l(t('Printer-friendly version'), $path, $options);
+}
+
+/**
+ * Implementation of hook_menu().
+ * The callback prints pages for the views of the mutual credit module. The whole directories of offers,
+ * or wants are printed even though the view might show the directory pagewise.
+ */
+function cforge_print_menu() {
+  $items['print/%'] = array(
+    'title' => 'Print Directory',
+    'page callback' => 'cforge_print',
+    'access arguments' => array('view directory'),
+    'page arguments' => array(1,'all'),   
+    'type' => MENU_CALLBACK,
+  );
+  $items['print/%/%'] = array(
+    'title' => 'Print Directory',
+    'page callback' => 'cforge_print',
+    'access arguments' => array('view directory'),
+    'page arguments' => array(1,2),   
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Page callback.
+ * This functions collects the data nd immediately prints it onto a page in a new window.
+ *
+ * @param $type
+ *   the type of data that should be printed: offers, wants or both.
+*/
+function cforge_print($type, $tid) {
+	
+  $term = taxonomy_get_term($tid);
+  if ($type == "members") {
+    $pages = _cforge_print_get_member_data();
+    $title  = t("Member's Directory"); 
+  }
+  else {
+    $types = array();
+    switch ($type) {
+      case 'both':
+        $types = "'offer','want'"; 
+        $title = (t("Offers & Wants"));
+        break;
+      case 'want':
+        $types = "'want'";
+        $title = (t("Wants directory"));
+        break;
+      case 'offer':
+        $types = "'offer'";
+        $title = (t("Offers directory"));
+        break;
+    } 
+    $pages = _cforge_print_get_directory ($types, $tid);
+    if ($tid) $title .= ': '.$term->name;
+  }
+
+  drupal_set_title($title); 
+  return strval($pages);
+}
+
+function _cforge_print_get_member_data() {
+  $results = db_query(
+    "SELECT DISTINCT u.uid FROM {users} u
+      LEFT JOIN {users_roles} ur ON u.uid = ur.uid
+      WHERE u.status = 1 AND u.uid > 0
+      AND ur.rid = %d
+      ORDER BY %s",
+    array(
+      ':rid' => RID_TRADER,
+      ':order' => variable_get('cc_select_user_orderby', 'u.uid')
+    )
+  );
+  $accounts = array();
+  while ($uid = db_result($results)) {
+    $account = user_load($uid);
+    if ($account->roles[RID_SYSTEM]) continue;
+    //number | first name | lastname | address | postal code | city | phone 1 | phone 2 | email
+    $data[] = array(
+      'uid' => $account->uid,
+      'name' => cforge_username($account),
+      'address' => '<pre>'. trim($account->profile_address) .'</pre>',
+      'locality' => $account->profile_locality,
+      'phones' => implode('<br />', array_filter(array($account->profile_phone1, $account->profile_phone2))),
+      'mail' => $account->mail
+    );
+  }
+  $headings = array(t('Acc.'), t('Name'), t('Address'), t('Locality'), t('Phone'), t('Email'));
+  //need to find out the actual css for a page break
+  return theme('cforge_paginate', $data, $headings);
+}
+
+/**
+ * This functions load the data, that should be printed into an HTML table. 
+ * @param $type
+ *   the type of data that should be printed: offers, wants or both.
+ * @return
+ *   HTML table filled with data.
+ */
+
+function _cforge_print_get_directory($types, $tid = 'all') {
+  $ands[] = 'u.status = 1';
+  if ($tid != 'all') {
+    $ands[] = 'tn.tid = ' . $tid;
+  }
+  $query = "SELECT n.nid, n.type, td.name as category, td.tid, n.title, u.name, u.uid, n.created
+      FROM {node} n
+      INNER JOIN {term_node} tn ON n.vid = tn.vid
+      LEFT JOIN {term_data} td ON tn.tid = td.tid
+      INNER JOIN {users} u ON n.uid = u.uid
+      LEFT JOIN {node_revisions} nr ON n.vid = nr.vid
+      WHERE n.type in ($types)
+      AND ".implode(' AND ', $ands)."
+      ORDER BY td.name ASC, n.created DESC";
+
+  $result = db_query($query);
+  $category = "";
+  while ($data = db_fetch_object($result)) {
+    if ($category != $data->category) {
+      // new category prints an almost empty row
+      $category = $data->category;
+      //this leaves a bit of space as its tricky with css and tables
+      $rows[] = array (0=>'&nbsp;');
+      $rows[] = array (
+        'class' => 'cc-category',
+        'data' => array ($data->category, '', '')
+      );
+    }
+    $rows[] = array (
+      'class' => 'cc-data',
+      'data' => array (
+        wordwrap($data->title, 100, '<br>'),
+        cforge_username(user_load($data->uid)),
+        format_date($data->created, 'small')
+      )
+    );
+  }
+  if (count($rows)) {
+    return theme('cforge_paginate', $rows);
+  }
+}
+
+function theme_cforge_paginate($data, $headings=array()) {
+  static $date;
+  //$date = '<div style="float:right">'. format_date(time(), 'small') .'</div>';
+  $pages = array_chunk($data, CFORGE_PRINT_LINES);
+  foreach ($pages as $rows) {
+    //$pager = '<div style="float:left">'. t('Page @num of @total', array('@num' => $i++, '@total' => count($pages))) .'</div>';
+    $content = theme('table', $headings, $rows, array('id' => 'cforge-print-table'));
+    //it seems that the page breaks are not working
+    $output .= '
+<div class="cforge-print-page">
+  '.$date.$pager.'
+  '.$content.'
+</div>';
+  }
+  return $output;
+}
+
+/*
+//3 column layout
+function theme_cforge_paginate($members) {
+  $pages_data = array_chunk($members, 12);
+  foreach ($pages_data as $page_data) {
+    $page = '<div class="cforge-print-page">';
+    $columns_data = array_chunk($page_data, 4);
+    foreach ($columns_data as $column_data) {
+      $page .= "\n<div class = \"cforge-print-column\">";
+      foreach($column_data as $account) {
+        $page .= "\n<div class = \"cforge-print-member\">";
+        $page .= $account;
+        $page .= "</div>";
+      }
+      $page .= "</div>";
+    }
+    $output .= $page . '</div>';
+  }
+  //need to find out the actual css for a page break
+  return $output;
+}
+*/
+
+
+?>

@@ -1,0 +1,138 @@
+/* $Id */
+ #edit-body-wrapper {
+   width: 100%;
+   clear: both;
+ }
+
+#header {
+  padding: 8pt 15px 10px 15px;
+}
+#header h1{
+  display: inline;
+  font-size: 3.5em;
+  font-weight: bold;
+  font-style: italic;
+  margin-top: 0px;
+  clear:none;
+}
+
+#header .logo {
+  float:left;
+  height:80px;
+  padding: 5px 15px 0 0;
+}
+
+.slogan, .anonymenu .a{font-weight:bold; color:#48f; padding-left:1em;}
+#header .slogan{font-size:1.25em;}
+
+.secondary-links{float:right; clear:right;}
+.secondary-links li {display:inline;}
+.secondary-links li.a{color:#314C74;;}
+
+span.currency-0:before, th.views-field-quantity:before{
+  /*you can put special characters directly here, not unicodes*/
+  content:url('../files/saliere.gif');
+}
+
+span.views-field-title, div.views-field-value, div.views-field-name{
+  display:inline;
+}
+
+.view-offers-wants-directory .views-field-type{
+  font-weight: bold;
+}
+.block .view-transaction-list .views-field-from-uid:after {
+  content:' > ';
+}
+
+.view-footer{
+  text-align:center;
+}
+div.contact-summary {
+  border: medium solid gray;
+  margin:1em 0em; 
+  padding:0.5em;
+  clear:both; 
+  float:left;
+  width:100%;
+}
+
+table.profile-balances{
+  width:inherit;
+}
+
+.push {
+  clear: both;
+  height: 5em;
+}
+
+#footer {
+  clear: both;
+  font-size: .95em;
+  height: auto;
+  min-height: 5em;
+  text-align: center;
+  margin: 5em auto 0em;
+  padding: 0 0 1em;
+}
+
+#content-top {
+  margin-top:2em;
+  text-align:center;
+  width:100%;
+  color:#fff;
+}
+
+#content-top div{
+  display:inline;
+  padding:0 0.5em;
+}
+#content-bottom {
+  clear:both	
+}
+.wrap-center {
+  display:table;
+  margin:0pt auto;
+}
+div.stat{
+}
+#header div.stats{
+  float:right;
+  text-align:right;
+}
+#block-user-1, 
+#block-user-1 ul.menu, 
+#block-user-1 .content-menu,
+.block ul {
+  padding:0;margin:0;border:none;
+}
+
+.profile h3{
+  clear:both;
+  border-bottom:none;
+}
+.block #edit-completer-uid
+.block #edit-starter-uid{
+  font-size:85%;
+}
+li.leaf {padding: 0.2em 0pt 0pt 6pt}
+
+.profile #chart{float:right}
+
+#credit, #credit a{
+  color:white;
+}
+
+
+div.transaction .links li{
+  border: 1px solid #006;
+  padding: 0.2em 0.4em;
+  background: #eee;
+  margin: 0.2em;
+}
+div.transaction .links li a:hover{
+  background: #ddd;
+  text-decoration: none;
+}
+
+#block-locale-0 li{display:inline;}

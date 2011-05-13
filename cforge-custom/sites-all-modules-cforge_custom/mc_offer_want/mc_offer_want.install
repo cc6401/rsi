@@ -1,0 +1,84 @@
+<?php
+// $Id: mc_offer_want.install,v 1.3 2010/05/01 15:52:49 matslats Exp $
+
+function mc_offer_want_requirements($phase) {
+  $req = array();
+  if ($phase == 'install') {
+    $req[] = array(
+      'title' => t("MCAPI should be installed first"),
+      'description' => t('This module required that a taxonomy is already installed. because it creates a vocabulary as it installs.'),
+      'severity' => module_exists('taxonomy') ? REQUIREMENT_OK : REQUIREMENT_ERROR,
+    );
+  }
+  return $req;
+}
+
+
+
+/**
+ * Implementation of hook_install().
+ */
+function mc_offer_want_install() {
+  
+  //create a vocab which will be used for the directory
+  $vocab = array(
+    'name' => t('Offers & Wants categories'),
+    'description' => t("This vocabulary is for categorising activities people do in their community. It can be used like the 'yellow pages' to help locate goods and services, but can also be used later on, for monitoring purposes."),
+    'help' => t('Choose one or more categories'),
+    'nodes' => array(
+      'offer' => 'offer',
+      'want' => 'want',
+    ),
+    'tags' => 0,
+    'multiple' => 1,
+    'required' => 1,
+    'auto' => 1,
+    'hierarchy' => 0,
+    'relations' => '',
+    'module' => 'mc_offer_want',
+  );
+  taxonomy_save_vocabulary($vocab);
+  $vid = db_result(db_query("SELECT vid FROM {vocabulary} WHERE module = 'offers_wants'"));
+  $link = l('admin/content/taxonomy/'. $vid, 'admin/content/taxonomy/'. $vid);
+  drupal_set_message(t('Now go and make some directory categories at !link', array('!link' => $link)), 'warning');
+  db_query("UPDATE {system} SET weight = 5 WHERE name = 'mc_offer_want'");
+  db_query("UPDATE {node_type} set module = 'mc_offer_want' where module = 'cc_offer_want'");
+}
+
+/**
+ * Implementation of hook_enable().
+ */
+function mc_offer_want_enable() {
+
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function mc_offer_want_uninstall() {
+  //drupal_uninstall_schema('mc_offer_want');
+  
+  //db_query("DELETE FROM {node} WHERE type IN ('offer','want')");
+  db_query("DELETE FROM {blocks} WHERE module = 'offers_wants'"); 
+  $view_ids = db_query("SELECT vid from {views_view} WHERE name LIKE 'cc_directory%'");
+  while  ($vid = db_fetch_array($view_ids)) {
+    db_query("DELETE FROM {views_display} WHERE vid = %d", $vid);
+  }
+  db_query("DELETE FROM {views_view} WHERE tag = 'offers/wants'");
+  db_query("DELETE FROM {menu_links} WHERE link_path LIKE 'directory/%'");
+  //identify the vocabulary and delete it.
+  $vid = db_result(db_query("SELECT vid FROM {vocabulary} WHERE module = 'offers_wants'"));
+  taxonomy_del_vocabulary($vid);
+}
+
+function mc_offer_want_update_6000() {
+  $ret=array();
+  if (is_function('offers_wants_uninstall')) {
+    $ret['#abort'] = array('success' => FALSE, 'query' => 'Delete the whole marketplace directory and replace with version 1');
+  }
+  drupal_uninstall_module('offers_wants');
+  return $ret;
+}
+
+
+

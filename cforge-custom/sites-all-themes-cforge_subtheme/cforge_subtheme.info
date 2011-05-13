@@ -1,0 +1,15 @@
+name = Community Forge subtheme
+description = Extends any theme to make it work better with Cforge_custom module. Currently based on Garland. If cforge_custom module is installed, this subtheme automatically changes its base theme to the first other enabled theme
+core = 6.x
+engine = phptemplate
+;this is overwritten in script
+base theme = garland 
+
+stylesheets[all][]   = cforge.css
+
+;these are the default regions
+regions[left] = Left sidebar
+regions[right] = Right sidebar
+regions[content] = Content
+regions[header] = Header
+regions[footer] = Footer

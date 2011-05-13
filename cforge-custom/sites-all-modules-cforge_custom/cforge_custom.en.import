@@ -1,0 +1,691 @@
+<?php 
+
+  $short = "d/m/y";
+  $medium = "D jS M, Y";
+  $long = "H:i, l jS F, Y";
+  variable_set('date_format_short', $short);
+  variable_set('date_format_medium', $medium);
+  variable_set('date_format_long', $long);
+  variable_set('date_format_short_custom', $short);
+  variable_set('date_format_medium_custom', $medium);
+  variable_set('date_format_long_custom', $long);
+
+function cforge_import_nodes() {
+  refresh_custom_menus();
+  $nodes[] = array(
+    'type' => 'page',
+    'uid' => '1',
+    'status' => '1',
+    'created' => '1231635134',
+    'changed' => '1253201309',
+    'comment' => '0',
+    'promote' => '0',
+    'moderate' => '0',
+    'sticky' => '0',
+    'title' => 'Home',
+    'body' => '<img src="/money-go-round.gif" align="right" style="margin:0 0 7em 1.5em" />
+<p>This is the English demo version of the Community Forge\'s standard installation. It shows these four main pages to everyday secondary-links. To get a good idea of the member experience, start by logging in using one of the member ids, (taking note of the role in brackets) then you can:<ul>
+<li>Start transactions with other users</li>
+<li>add offers and wants to the directory</li>
+<li>edit your other offers and wants</li>
+<li>Change your profile information</li></ul>
+Then you may log in as a committee members (they are listed on the left), and you will be able to<ul>
+<li>edit announcements, FAQ, pages and categories</li>
+<li>create Requests & acknowledgements</li>
+<li>manage images</li></ul>
+Don\'t worry about breaking anything, the site is refreshed every 15 minutes!
+This software is ready for your community to use, and we are working round the clock and round the world to improve this service!',
+    'log' => '',
+    'revision_timestamp' => '1253201309',
+    'format' => '2',
+    'name' => 'admin',
+    'path' => 'home',
+    'menu' => array(
+      'link_title' => 'Home',
+      'mlid' => 0,
+      'plid' => '0',
+      'menu_name' => 'visitors',
+      'weight' => '-50',
+      'options' => array(),
+      'module' => 'menu',
+      'expanded' => '0',
+      'hidden' => '0',
+      'has_children' => '0',
+      'customized' => 0,
+      'parent_depth_limit' => 8,
+    ),
+    '#_export_node_encode_object' => '1',
+  );
+
+  $nodes[] = array(
+    'type' => 'page',
+    'uid' => '1',
+    'status' => '1',
+    'created' => '123136505',
+    'changed' => '12452769',
+    'comment' => '0',
+    'promote' => '0',
+    'moderate' => '0',
+    'sticky' => '0',
+    'title' => 'Share...',
+    'body' => '<strong>Join us and share </strong>
+The local exchange systems gives you many opportunities to share.
+
+<strong>Put your new members information here</strong>
+
+Background, information, directions, times, locations.
+
+<strong>Share collective tasks</strong>
+Each association is only the sum of the actions of its members. That is why it is important to share the tasks related to the proper functioning thereof. The heading "Tasks" facilitates and encourages their distribution. Some tasks for the association may be paid in time or units. Solidarity contributions gain LETS for payment.
+
+
+ <strong> <a href="/echanger"> Share your knowledge, your property - Exchange </a> </strong>',
+    'log' => '',
+    'revision_timestamp' => '12452769',
+    'format' => '2',
+    'name' => 'admin',
+    'path' => 'share',
+    'menu' => array(
+      'link_title' => 'Share',
+      'mlid' => 0,
+      'plid' => '0',
+      'menu_name' => 'visitors',
+      'weight' => '-48',
+      'options' => array(),
+      'module' => 'menu',
+      'expanded' => '0',
+      'hidden' => '0',
+      'has_children' => '0',
+      'customized' => 0,
+      'parent_depth_limit' => 8,
+    ),
+    '#_export_node_encode_object' => '1',
+  );
+
+
+  $nodes[] = array(
+    'type' => 'page',
+    'uid' => '1',
+    'status' => '1',
+    'created' => '123602972',
+    'changed' => '124528074',
+    'comment' => '0',
+    'promote' => '0',
+    'moderate' => '0',
+    'sticky' => '0',
+    'tnid' => '0',
+    'translate' => '0',
+    'vid' => '12',
+    'revision_uid' => '1',
+    'title' => 'Getting Started',
+    'body' => '<strong>How it works</ strong>
+
+<p> Offers and wants appear on our website or catalog. A member makes contact with another member to make an exchange. Members agree on its value, and make the exchange. Then, an e-member exchange takes on the site, the other confirms and finally the exchange is recognized.</p>
+
+<p>Some tasks for the association may be paid in grain of salt. Solidarity contributions in local currency is seen to reward those tasks. </ P>
+
+<p>An annual fee in Swiss francs (CHF 30, CHF from July 20) is charged to cover the operating costs of the association (stamps, photocopies, ...)</ p>
+
+<p>A monthly meeting to exchange information is held. There is a general meeting every year. </ P>
+
+
+<p><strong> Start by <a href="/share"> Sharing </ a> </ strong> </ p>',
+    'log' => '',
+    'revision_timestamp' => '124528074',
+    'format' => '2',
+    'name' => 'admin',
+    'path' => 'start',
+    'menu' => array(
+      'link_title' => 'Getting Started',
+      'mlid' => 0,
+      'plid' => 0,
+      'menu_name' => 'visitors',
+      'weight' => 0,
+      'options' => array(),
+      'module' => 'menu',
+      'expanded' => 0,
+      'hidden' => 0,
+      'has_children' => 0,
+      'customized' => 0,
+      'parent_depth_limit' => 8,
+    ),
+    '#_export_node_encode_object' => '1',
+  );
+
+
+  $nodes[] = array(
+    'type' => 'page',
+    'uid' => '1',
+    'status' => '1',
+    'created' => '123121053',
+    'changed' => '1242633501',
+    'comment' => '0',
+    'promote' => '0',
+    'moderate' => '0',
+    'sticky' => '0',
+    'title' => 'Commitment is Enriching!',
+    'body' => '<strong>Example: To become a member of LETS </strong>
+<ol><li>Browse our site to better understand the system.</li>
+<li>Contact members/attend orientation meeting, put information here.</li>
+<li>Filling out registration form, put link to form here.</li>
+<li>Fee to pay, how much, where/who/how to pay information here.</li>
+<li>Details of how the process continues after payment.</li>
+<li>Welcome to the LETS. To share and enrich you!</li></ol>',
+    'log' => '',
+    'revision_timestamp' => '1242633501',
+    'format' => '1',
+    'name' => 'admin',
+    'path' => 'commit',
+    'menu' => array(
+      'link_title' => 'Commit',
+      'mlid' => 0,
+      'plid' => '0',
+      'menu_name' => 'visitors',
+      'weight' => '-46',
+      'options' => array(),
+      'module' => 'menu',
+      'expanded' => '0',
+      'hidden' => '0',
+      'has_children' => '0',
+      'customized' => 0,
+      'parent_depth_limit' => 8,
+    ),
+    '#_export_node_encode_object' => '1',
+  );
+
+
+  $nodes[] = array(
+    'type' => 'page',
+    'uid' => '1',
+    'status' => '1',
+    'created' => '1227730547',
+    'changed' => '1253443438',
+    'comment' => '0',
+    'promote' => '0',
+    'moderate' => '0',
+    'sticky' => '0',
+    'title' => 'SEL',
+    'body' => '<strong>A propos des SELs :</strong>
+<a href="http://www.lets-linkup.com/400-RestOfEurope.htm">LETS-linkup.com</a> - le site propose la liste des SELs présents dans chaque pays dont la Suisse. Incomplet mais utile.
+<a href="http://www.selidaire.org/">Selidaire</a> - informations générales sur le fonctionnement des SELs, forums, ...
+<a href="http://transversel.apinc.org/">Transversel</a> - information à propos des SELs. A jour, le plus vivant en français.
+<a href="http://www.imaginer.ch/eba/textes/sel.html">Imaginer</a> - aperçu historique des divers systèmes de troc (dont les SELs) présents à Genève.
+
+<strong>SELs en Suisse :</strong>
+<a href="http://www.sel-suisse.ch">SELs Suisse</a> - systèmes d\'échange locaux de la Chaux-de-Fonds, du Val-de-Ruz (sel vaudruzien) et du Littoral neuchâtelois (sel des rives) se présentent.
+<a href="http://www.sel-lausanne.net">SEL Lausanne</a> - visitez nos chers voisins Lausannois.
+<a href="http://www.tauschnetz.ch"> Tauschnetz</a> - la plupart des SELs de Suisse.
+
+<strong>Pourquoi entrer dans un SEL ? <a href=pourquoisel">cliquez ici ></a></strong>
+
+<strong>Questions > Réponses sur les Sels</strong>
+<em>Unité d\'échange</em>
+-L’unité d’échange, le grain, permet de mesurer les échanges entre adhérents.
+
+<em>Mais c’est du troc !</em>
+-Pas du tout. Dans le troc, deux personnes échangent au même moment deux choses qui ont à peu près la même valeur. Dans le SEL, les grains permettent de transférer, à différentes personnes et différents moments, des services, des savoirs ou des biens qui ont des valeurs différentes.
+
+<em>Les grains de SEL et les Francs, c’est pareil ?</em>
+-Non, car, pour dépenser des Francs, il faut d’abord en posséder. Alors qu’avec un compte à zéro je peux échanger tout de suite.
+-Non, parce que les grains ne sont pas convertibles en Francs, ni les Francs en grains.
+-Non, car il s’agit d’une monnaie locale sans utilisation en dehors de l’association.
+-Non, car cette monnaie locale n’est pas capitalisable, ne produit pas d’intérêts et n’est donc pas spéculative.
+
+<em>Qui fixe la valeur ?</em>
+-Les adhérents sont libres de fixer la valeur qu’ils veulent suivant le plaisir, la difficulté ou la pénibilité représentée par une tâche ou selon leur expérience. Le cas des objets est plus épineux et on aura davantage tendance à en évaluer le montant en se rapportant au Franc.
+
+<em>Mais, c\'est trop comptabilisé!</em>
+-Rien n\'empêche ceux qui avaient l’habitude de rendre un service gratuit de le faire, une fois ou l’autre, ou en partie.
+
+-L’expérience prouve que le SEL provoque la rencontre et génère le don.
+
+<em>Ce n’est pas grave d’avoir un compte SEL en négatif ?</em>
+-Pas du tout. Chacun commence avec un compte à zéro. Si j’ai versé 400 grains pour la guitare de Denis, son compte devient positif mais le mien, négatif, remontera au fur et à mesure que j’écoulerai mes confitures de banane à 10 grains le pot. Ainsi, dans un SEL, il y a nécessairement des adhérents qui ont un compte négatif, et d’autres un compte positif. La somme de tous les montants de tous les comptes est égale à zéro.
+
+<em>On peut rester dans le négatif indéfiniment ?</em>
+-Les limites sont entre -500 et +500 grains. Si un adhérent atteint cette limite, on lui rappelle les règles.
+
+<em>Qu’est-ce qui m’empêche de partir avec un compte négatif ?</em>
+-Un débit constitue un engagement à rendre au groupe des biens, des services, ou des savoirs. Or, dans le SEL, entre les personnes qui se rencontrent et font connaissance naît la confiance en même temps que l’engagement moral. En pratique, ça suffit pour que ce genre de comportement irresponsable soit très rare.
+
+<em>Quelle garantie a-t-on sur la qualité des biens ou des services proposés ?</em>
+-Aucune. C’est aux adhérents de discuter, pour savoir si l’un a le niveau de qualification que souhaite l’autre ou ce qui se passe si l’objet tombe en panne le lendemain, afin de se mettre d’accord avant l’échange. Pas de solution toute faite, ça passe par la discussion et la confiance. En cas de problème, il-y-a un-e
+
+<em>Mais c’est du travail au noir ? </em>
+-Non, il s’agit d’une entraide entre adhérents, pour des coups de main « ponctuels, non répétitifs et de courte durée ».
+-La pratique montre qu’énormément d’échan­ges qui n’auraient pas pu voir le jour dans le cadre classique du marché se font au sein des SEL. D’ailleurs, même si Marie demande à Bernard de l’aider à retapisser son appartement parce que ses fins de mois sont difficiles, c’est un autre artisan ou commerçant qui bénéficiera de l’argent économisé par Marie. Plus il y a de convivialité et de rencontres, plus il y a d’échanges, plus se créent des liens de proximité, entraînant de nouveaux échanges.
+
+<em>Mais moi je n’ai rien à proposer !</em>
+-C’est ce que dit tout le monde ! Ce que vous pouvez proposer ne vous paraît pas intéressant, s’il n’est pas compté comme travail salarié en Francs. Pourtant chacun possède une richesse à donner aux autres : faire de la pâtisserie, du bricolage, proposer les noix de son jardin, raconter des histoires aux enfants, écouter celui qui a un gros coup de cafard. Tout le monde, enfants, retraités, chômeurs, a quelque chose à proposer. Il suffit d’être à l’écoute de ses différences.
+-C’est fou ce qu’on peut découvrir alors comme nouveaux échanges quand on est à l’écoute de ses différences.',
+    'teaser' => '<strong>A propos des SELs :</strong>
+<a href="http://www.lets-linkup.com/400-RestOfEurope.htm">LETS-linkup.com</a> - le site propose la liste des SELs présents dans chaque pays dont la Suisse. Incomplet mais utile.
+<a href="http://www.selidaire.org/">Selidaire</a> - informations générales sur le fonctionnement des SELs, forums, ...
+<a href="http://transversel.apinc.org/">Transversel</a> - information à propos des SELs. A jour, le plus vivant en français.',
+    'log' => '',
+    'revision_timestamp' => '1253443438',
+    'format' => '2',
+    'name' => 'admin',
+    'path' => 'lets',
+    'menu' => array(
+      'link_title' => 'SELs',
+      'mlid' => 0,
+      'plid' => '0',
+      'menu_name' => 'secondary-links',
+      'weight' => '-47',
+      'options' => array(),
+      'module' => 'menu',
+      'expanded' => '0',
+      'hidden' => '0',
+      'has_children' => '0',
+      'customized' => 0,
+      'parent_depth_limit' => 8,
+    ),
+    '#_export_node_encode_object' => '1',
+  );
+  
+
+  $nodes[] = array(
+    'type' => 'page',
+    'uid' => '1',
+    'status' => '1',
+    'created' => '1241708112',
+    'changed' => '124526113',
+    'comment' => '0',
+    'promote' => '0',
+    'moderate' => '0',
+    'sticky' => '0',
+    'title' => 'FAQ',
+    'body' => '<h3>Lexique</h3>
+<h5>Qu\'est-ce qu\'un échange \"à confirmer\"?</h5>
+C\'est un échange en attente de confirmation de votre partenaire.
+<h5>Qu\'est-ce qu\'un échange \"comptabilisé\"?</h5>
+C\'est un échange confirmé, qui a été débité/crédité dans les comptes respectifs.
+<h5>Vocabulaire SELs</h5>
+Les SELS évitent le vocabulaire financier car il ne faut pas confondre les deux systèmes!
+<ul><li>à la place de « chèque », utilisez « bon d’échange » ou « unités d’échange »</li>
+<li>évitez aussi « vendre » et « acheter » : on « donne », « offre », « échange », « propose », « reçoit »</li>
+<li>parlez d’« échange » plutôt que de « transaction ».</li>
+<li>parlez de « service » que vous rendez à quelqu’un qui en a besoin, de « richesse » que vous apportez ou recevez.</li></ul>
+<p>
+<h3>Votre Compte</h3>
+<h5>Comment accéder à mon compte?</h5>
+Cliquez sur votre nom (en haut à droite).
+<h5>Comment changer mon email / mot de passe?</h5>
+Cliquez sur votre nom (en haut à droite) > Modifier compte > Enregistrer les modifications.
+<h5>Comment changer mon adresse?</h5>
+Cliquez sur votre nom (en haut à droite) > Modifier profil > Enregistrer les modifications.
+<h5>Comment consulter la liste de Mes Echanges?</h5>
+Cliquez sur votre nom > Mes Echanges
+<h5>C\'est quoi les Soldes?</h5>
+\"solde\": votre solde actuel (sans les grains \"à confirmer\")
+\"à confirmer\": les grains qui seront comptabilisés après la confirmation par votre partenaire
+\"total\": le total des grains (en positif) échangés depuis la mise en place du site
+<p>
+<h3>Infos</h3>
+<h5>La page \"Infos\" change continuellement!</h5>
+C\'est vous qui faites vibrer ce lieu en visitant, contactant, échangeant et contribuant au SEL. Le comité gère la partie centrale de cette page et invite les membres à soumettre un article pour la page \"Infos\"
+***ENGLISH***
+by contacting an administrator with the contact block to the right
+***/ENGLISH***
+
+<h3>Offres & Demandes</h3>
+<h5>L\'Offre/Demande/Échange apparaît dans la \"mauvaise\" catégorie (p.ex. \"Divers\")</h5>
+Le logiciel analyse toutes les mots dans vos annonces et les classe automatiquement dans la/les catégorie-s correspondante-s en utilisant un système de synonymes.
+Ce n\'est pas parfait, mais a l\'avantage d\'être évolutif, car les synonymes sont mis à jour régulièrement.
+Si votre Offre/Demande/Échange n\'est pas dans la \"bonne\" catégorie, vous pouvez essayer de la modifier en changeant ou ajoutant quelques mots qui sont probablement dans la catégorie ciblée. Sinon, ce n\'est pas grave, les membres vont la trouver par la recherche.
+<h5>Comment ajouter une Offre/Demande?</h5>
+Il y a plusieurs façons, mais voici la plus facile:
+cliquez sur votre nom > Mes Offres/Demandes > Créer une nouvelle Offre (ou Demande)
+OU cliquez sur \"Offres\" dans la navigation du haut > un formulaire apparaît en bas à gauche
+cliquez sur \"Demandes\" dans la navigation du haut > un formulaire apparaît en bas à gauche.
+<p>
+<h3>Membres</h3>
+<h5>Comment contacter un-e membre?</h5>
+Voici la méthode la plus facile:
+cliquez sur \"Membres\" dans la navigation du haut > cliquez sur leur nom ou n° de membre pour aller sur leur compte > cliquez sur l\'onglet \"contact\".
+<h5>Comment envoyer un email à un-e membre?</h5>
+Depuis le compte du membre, cliquez sur \"contact\" sous l\'affichage de son nom, rédigez et envoyez (vous pouvez vous envoyer une copie en cochant la case à coté du bouton \"envoyer\"). Nous avons choisi cette méthode pour faciliter la prise de contact ainsi que d\'éviter l\'abus des emails.
+<p>
+<h3>Échanges</h3>
+<h5>Comment saisir mes échanges 2008?</h5>
+L\'objectif est de contrôler et saisir tous vos échanges 2008, sans faire trop de doublons.
+<ol><li>Téléchargez votre feuille d\'échanges Excel du SELduLac qui se trouve dans la rubrique <a href=docs>Docs</a> du site \"Feuilles d\'échange des membres ... du 23/06/08\"</li>
+<li>Imprimez-la pour pouvoir y faire référence pendant la saisie de vos échanges sur le site.</li>
+<li>Rassemblez vos feuilles d\'échanges 2008 et biffez au crayon les échanges déjà comptabilisés sur la feuille d\'échanges Excel que vous venez d\'imprimer.</li>
+<li>Ensuite, dans la partie \"Membres\" du site, cliquez sur votre nom, ensuite cliquez sur \"Mes Échanges\". Vous avez la liste des échanges déjà saisis depuis la mise en ligne du site. Les échanges avec un voyant vert dans la colonne État sont comptabilisés et ne peuvent plus être modifiés. (Doublons? Voir plus bas). Les échanges avec voyant orange peuvent être modifiés ou supprimés, selon les besoins de votre saisie.</li>
+<li>Une fois que vous avez contrôlé et biffé les échanges déjà saisis sur la feuille Excel et le site, vous êtes prêts à saisir de nouveaux échanges.</li>
+<li>Cliquez sur \"Saisir un Échange\" sous votre nom en haut à droite, et en quelques minutes vous aurez saisi tous vos échanges! Veuillez décrire vos échanges en 4 mots minimum SVP pour qu\'ils se trouvent dans la bonne catégorie savoir plus.</li></ol>
+
+Doublons?
+Essayez d\'abord de \"supprimer\" l\'échange en question. Sinon, vous pouvez saisir un échange de \"correction\" (avec la même personne mais les grains vont dans le sens contraire). Mettez dans la description: \"correction de l\'échange \"X\" le \"X\"\".Voilà, c\'est tout.
+
+J\'ai saisi toutes les feuilles d\'échanges reçues avant le 15 juin de LA PERSONNE QUI A ENVOYÉ LA FEUILLE, mais l\'échange n\'a pas forcément été saisi chez la personne qui n\'a pas envoyé sa feuille (pour le même échange). Ceci peut présenter des difficultés pour accorder les parties. A vous de faire preuve de souplesse et d\'entente.
+
+Si vous n\'avez pas de copies de vos feuilles d\'échanges envoyé à moi depuis le 15 juin, je vous les renvoient volontiers.
+
+Courage, en faisant ce travail, pensez au comptable en grains qui l\'as fait pendant des années pour 100 membres. ;)
+<h5>Comment Saisir un Échange?</h5>
+Cliquez sur le lien \"Saisir un Échange\", sous votre nom en haut à droite.
+Vous avez également la possibilité d\'aller sur le compte d\'un membre et utiliser le formulaire sur la gauche.
+<h5>Qui saisit l\'échange sur le site?</h5>
+Généralement la personne qui va verser des grains, ou selon accord. Ce qui est important est que vous contrôliez vos échanges \"à confirmer\" avant de faire la saisie d\'un nouvel échange, pour éviter des doublons. Tant que votre partenaire n\'as pas confirmé l\'échange, vous pouvez le modifier ou le supprimer.
+<h5>Que faire si le partenaire n\'a pas confirmé l\'échange?</h5>
+D\'abord, faire preuve d\'un peu de patience. Certaines personnes ne consultent leurs emails qu\'une fois par semaine. D\'autres peuvent être en vacances ou absents pendant de longues périodes. Après un certain temps, vous pouvez les relancer par téléphone, ou éventuellement par email.
+<h5>Comment enregistrer un échange avec le SELdulac? (Compte 100)</h5>
+En choisissant le Compte 100 comme partenaire dans l\'échange. Un-e membre du comité va confirmer l\'échange par la suite. Des exemples: des travaux du comité des fêtes et d\'autres tâches pour l\'association.
+<h5>Est-ce que je peux modifier un échange déjà saisi?</h5>
+Oui, si votre partenaire dans l\'échange n\'a pas encore confirmé l\'échange. Vous pouvez même le supprimer.
+<h5>Que faire si l\'échange n\'est pas accepté pour des raisons de solde (limite de +/-500 grains)?</h5>
+Le principe est que chacun contrôle le solde de l\'autre avant d\'entrer dans un échange important. Le trésorier en grains peut autoriser des dépassements pour une période maximale de 30 jours.
+<h5>Que veut dire la colonne \"État\"?</h5>
+\"Vert\" est un échange confirmé
+\"Orange\" est un échange qui attend confirmation de votre partenaire
+\"Rouge\" signifie que l\'échange est entré en médiation
+<h5>Que faire en cas d\'échanges doublons ? </h5>
+Si l\'échange n\'a pas encore été confirmé, la personne qui a saisi l\'échange peut le supprimer.
+Si l\'échange est confirmé, vous pouvez saisir un échange de \"correction\" (avec le même nombre de grains dans le sens inverse avec la même personne). Mettez dans la description: \"correction de l\'échange \"X\" le \"X\"\". Donc, les deux échanges s\'annulent.
+<p>
+<h3>Contributions</h3>
+<h5>Qu\'est-ce-qu\'une Contribution ?</h5>
+Partant du principe que si chaque membre contribue à son association, il-y-a moins besoin d\'impôts (Contributions SELidaire), nous affichons dans la partie \"Contributions\" du site les petits coups de mains nécessaires au fonctionnement du SEL. Portez-vous volontaire pour ces tâches en contactant la personne dans la colonne de droite. Vous serez crédité d\'un point \"Contributions\" pour chaque tâche accomplie.
+<h5>Marche à suivre : Chercher la clef de la Maison des Asters</h5>
+Étant donné que la Maison du Quartier est fermé le lundi, vous devriez chercher la clef le vendredi précédent la Réunion de lundi.
+<h5>Marche à suivre : Ramener la clef</h5>
+<ol>
+<li>en course de redaction</li></ol>
+<h5>Marche à suivre : Noter les Présences d\'un Repas de Lundi</h5>
+<ol><li>Copier et coller les noms des membres de cette page dans un logiciel comme Word.</li>
+<li>Imprimer un exemplaire de la liste</li>
+<li>Faire signer les membres quand ils arrivent à la Maison de Quartier</li>
+<li>Estimer le nombre de grains pour chaque plat apporté et noter le nombre à coté du nom du membre (ou demander à un-e membre du comité d\'estimer la valeur si il-y-as désaccord)</li>
+<li>Remettre la \"Feuille de Présence\" à un-e membre de comité pour la saisi.</li></ol>
+<p>
+<h3>FAQ</h3>
+<h5>D\'autres questions?</h5>
+Contactez
+***ENGLISH***
+your site administrator with the block to the right
+***/ENGLISH***
+<h3>Docs</h3>
+<h5>Comment imprimer une liste?</h5>
+Cliquez sur l\'icône \"imprimante\" qui se trouve en bas des pages. Toutes les pages n\'ont pas encore cette possibilité. Conseil: Regardez l\'aperçu avant d\'imprimer, car les listes peuvent être longues. Pensez à limiter la consommation de papier en utilisant le site.
+NB: nous travaillons actuellement à rendre les listes plus imprimables
+<h3>Site</h3>
+<h5>Je n\'ai pas accès aux informations</h5>
+Seuls les membres ayant saisi leur numéro de membre et leur mot de passe peuvent voir les détails des annonces et les adresses des membres.
+<h5>Pourquoi avoir fait un nouveau site?</h5>
+Avec l\'augmentation importante du nombre des membres, la saisie des échanges et la répartition des tâches est devenue nécessaire.
+Le site vise également à :
+<ul><li>favoriser les échanges</li>
+<li>renforcer les liens entre les membres</li>
+<li>augmenter la transparence</li>
+<li>baisser la contribution solidaire (impôt).</li></ul>
+<h5>Voici ce qui est prévu pour les versions suivantes du site</h5>
+<b>Version 1.1 (ct 2009)</b>
+<em>Mon compte</em>
+<ul><li>travail de mise en page</li>
+<li>rationalisation de l\'information</li>
+<li>paiement par internet des cotisations</li></ul>
+<i>Membres</i>
+<ul><li>façon plus élégante de chercher des membres</li></ul>
+<i>Échanges</i>
+<ul><li>recherche par catégories comme pour Offres et Demandes</li>
+<li>séparer les \"Biens\" des \"Services & Savoirs\"</li></ul>
+<i>Offres/Demandes</i>
+-afficher des photos pour les offres de biens
+<i>\"Contributions\" (SELidarité)</i>
+<ul><li>échanges pour un Franc Symbolique</li>
+<li>Annonces à l\'attention des autres membres</li>
+<li>Tâches à Faire pour le SELduLac \"Contributions\" (fonctionne actuellement)</li>
+<li>Inscriptions pour ces tâches (en cours de réalisation)</li>
+<li>Remerciements après avoir effectué ces tâches (fonctionne actuellement)</li></ul>
+
+<b>Version 1.5 (2010)</b>
+<em>\"Contributions\" (SELidarité)</em>
+<ul><li>Sorties (cinema, sports, jeux, etc.)</li>
+<li>Parrainage des nouveaux membres</li>
+<li>Parrainage des Sans Internet Fixe</li></ul>
+
+<b>Version 2.0</b>
+<em>\"Contributions\" (SELidarité)</em>
+<ul><li>outils pour créer un SEL</li></ul>
+
+Si vous voulez faire d\'autres suggestions
+***ENGLISH***
+utilise the contact block to the right
+***/ENGLISH***
+<h5>Qui a créé l\'outil de base pour gérer les SELs?</h5>
+Bonjour, nous sommes les créateurs de cet outil de gestion pour les SELs.
+Matthew Slater, un informaticien
+Tim Anderson, un membre d\'un SEL.
+Notre premier \"client\" était le SELduLac à Genève.A partir de notre outil, nous avons importé les données du SELduLac, adapté l\'interface, formé des membres du comité et nous assurons le suivi et la maintenance pendant une année. Ceci pour l\'échange de CHF 1\'500.-.
+Nous mettons à disposition des autres SELs nos compétences pour mettre en place cette même plateforme d\'échanges. En cas d\'intérêt, veuillez contacter',
+
+    'log' => '',
+    'revision_timestamp' => '124526113',
+    'format' => '2',
+    'name' => 'admin',
+    'path' => 'faq',
+    'menu' => array(
+      'link_title' => 'FAQ',
+      'mlid' => 0,
+      'plid' => 0,
+      'menu_name' => 'secondary-links',
+      'weight' => 0,
+      'options' => array(),
+      'module' => 'menu',
+      'expanded' => 0,
+      'hidden' => 0,
+      'has_children' => 0,
+      'customized' => 0,
+      'parent_depth_limit' => 8,
+    ),
+    '#_export_node_encode_object' => '1',
+  );
+  
+  foreach ($nodes as $node) {
+    $obj = (object)$node;
+    node_save($obj);
+  }
+
+  db_query("INSERT into {url_alias} (src, dst, language) VALUES ('node/%d', '%s', '%s')",
+    db_result(db_query("SELECT nid from {node} WHERE title = 'Home'")), 'home', 'en');
+
+  db_query("INSERT into {url_alias} (src, dst, language) VALUES ('node/%d', '%s', '%s')",
+    db_result(db_query("SELECT nid from {node} WHERE title = 'Commit' ")), 'commit', 'en');
+
+  db_query("INSERT into {url_alias} (src, dst, language) VALUES ('node/%d', '%s', '%s')",
+    db_result(db_query("SELECT nid from {node} WHERE title = 'Get Started' ")), 'start', 'en');
+
+  db_query("INSERT into {url_alias} (src, dst, language) VALUES ('node/%d', '%s', '%s')",
+    db_result(db_query("SELECT nid from {node} WHERE title = 'Share' ")), 'share', 'en');
+
+  db_query("INSERT into {url_alias} (src, dst, language) VALUES ('node/%d', '%s', '%s')",
+    db_result(db_query("SELECT nid from {node} WHERE title = 'LETS' ")), 'LETS', 'en');
+
+}
+
+function cforge_set_variables() {
+  variable_set('site_offline_message', "Community Forge has taken your site offline briefly for maintenance. Thank you for your patience.");
+  variable_set('site_slogan', "Your slogan here");
+
+
+  variable_set('anonymous', t("Visitor"));
+
+  $default_mail = variable_get('site_mail', 'blah@blah.com');
+  db_query("INSERT INTO {contact} (`category`, `recipients`, `reply`, `weight`, `selected`) VALUES
+    ('Information request', '$default_mail', '', 1, 1),
+    ('Membership', '$default_mail', '', 2, 0),
+    ('Activities', '$default_mail', '', 3, 0),
+    ('Accounting', '$default_mail', '', 4, 0),
+    ('Website (tech)', '$default_mail', '', 5, 0),
+    ('Website (content)', '$default_mail', '', 6, 0),
+    ('Mediation', '$default_mail', '', 7, 0),
+    ('Suggest how to improve this site', 'installations@communityforge.net', '', 9, 0),
+    ('Contact the builder of this site', 'feedback@communityforge.net', '', 10, 0)
+  ");
+
+  $loginstring = module_exists('uid_login') ? "User ID: !uid" : "Username : !username";
+//for when the administrator creates an account
+  variable_set('user_mail_register_admin_created_subject', "Your new account at !site");
+  variable_set('user_mail_register_admin_created_body', "!username,
+
+A site administrator at !site has created an account for you. You may now log in to !login_uri using the following username and password:
+
+$loginstring
+password: !password
+
+You may also log in by clicking on this link or copying and pasting it in your browser:
+
+!login_url
+
+This is a one-time login, so it can be used only once.
+
+After logging in, you will be redirected to !edit_uri so you can change your password.
+
+--  !site team");
+//for when the user creates an account
+  variable_set('user_mail_pending_approval_subject', "Account details for !username at !site (pending admin approval)");
+  variable_set('user_mail_pending_approval_body', "!username,
+
+Thank you for registering at !site. Your application for an account is currently pending approval. Once it has been approved, you will receive another e-mail containing information about how to log in, set your password, and other details.
+
+--  !site team");
+//for when an account is unblocked.
+  variable_set('user_mail_status_activated_subject', "Account details for !username at !site (approved)");
+  variable_set('user_mail_status_activated_body', "!username,
+
+Your account at !site has been activated.
+
+You may now log in by clicking on this link or copying and pasting it in your browser:
+
+!login_url
+
+This is a one-time login, so it can be used only once.
+
+After logging in, you will be redirected to !edit_uri so you can change your password.
+
+Once you have set your own password, you will be able to log in to !login_uri in the future using:
+
+$loginstring");
+}
+
+function cforge_import_taxonomy() {
+  
+  $terms = array(
+    array(
+      'vid' => OFFERS_WANTS_VID,
+      'name' => 'Administration',
+      'weight' => 1,
+      'synonyms' => "writing\npapers\nclarifying\nadministrative\ncouncil\noffice\nclassification\ncorrespondence\nphotocopy\nmail\nmarketing\npublicity\nspelling\ncorrection\nsyntax\nsecret\ntranslation\nactylographie\nsheet\nrestructuring\nnetworking\ncontent\nreorganization\nminutes\nproofreading\nspelling",
+    ),
+    array(
+      'vid' => OFFERS_WANTS_VID,
+      'name' => 'Health', 
+      'weight' => 2,
+      'synonyms' => "herb\nBread\nDough\nmixer\nkitchen\nstove\nfungus\nvinegar\negg\nsalad\naspergettes\norganic\nhoney\nbetty\nbossy\nravioli\nLaurier\nrosemary\ntapenade\ntart\nsweet\nbiscuit\nthyme\nsyrup\ndesserts\nseed\npesto\nvegetable\ncouscous\nsemolina\nsourdough\nspelled\npropagator\nmeals\nglass\ncasserole\ndish\nsoup\npastry\nmint\nsauce\ncaviar\nelderberry\ndrink\ngrinder\njelly\njam\nvera\njuice\ndrink\nrecipe\npie\nveg",
+    ),
+    array(
+      'vid' => OFFERS_WANTS_VID,
+      'name' => 'Trades', 
+      'weight' => 3,
+      'synonyms' => "embroidery\nsaw\nsander\nsanding\nlacquer\nvarnish\nelectric\nadjustment\narrangement\nfloor\ndecoration\nmakeover\nnecklace\njewelry\nsemi-precious\nstone\nbracelet\ncatel\nloops\nsculpture\nwatercolor\ncanvas\nacrylic\nfloral\nfantasy\ncraft\nbeads\nrepair\nfabric\npaint\nart\ntool\nperçuese\nsmall\nrenovation\nwork\nCarpenter\nVise\nmounting\nroof\ncoating\nheating",
+    ),
+    array(
+      'vid' => OFFERS_WANTS_VID,
+      'name' => 'Arts & Culture', 
+      'weight' => 4,
+      'synonyms' => "tango\nshow\nstorytelling\nclown\nmprovisation\ncinema\nexpression\nflyer\nflyer\nbrochure\nculptures\nphotographer\nalbum\ncharcoal\nbook\nculture\nnovel\nvoice\nreading\npoetry\nbooks\nWriting\ndrawing\ninvention\nphotography",
+    ),
+    array(
+      'vid' => OFFERS_WANTS_VID,
+      'name' => 'Education & language', 
+      'weight' => 5,
+      'synonyms' => "German\nEnglish\nItalian\nlanguage\ntraining\nduty\nduring\nlessons\nRepeater\nSupport\nFrench\nanimation\nschool",
+    ),
+    array(
+      'vid' => OFFERS_WANTS_VID,
+      'name' => 'Computing & Electronics',
+      'weight' => 6,
+      'synonyms' => "computer\ncompile\ndisc\ndisk\nmusic\ndownload\ndigital\noffice\nmanagement\nWeb\nFileMaker\ngiven\ndigital\nelectronic\ninternet\nemail\ncamera\nphone\nsoftware\nMac\nsoftware\naudio\ndigitising\nslide\nExcel\nWord\nQuickbooks\nregistration\nPhotoshop\nmobile\nphone\nMP3\nplayer\nmovie\nradio\nspeaker\nwireless\nwi-fi\nphone\nCD\nDVD",
+    ),
+    array(
+      'vid' => OFFERS_WANTS_VID,
+      'name' => 'House & garden',
+      'weight' => 7,
+      'synonyms' => "carpet\nbalcony\nbed\ndecor\nlawn\nmower\nironing\nGarland\nYucca\nporcelain\nfridge\nstove\nwasher\npepper\nmill\nax\ncorkscrew\ncarpet\ncarpet\ncleaning\npapyrus\nceiling\nwall\nchair\ndown\nthe\nground\ncloth\nsofa\npillow\nlibrary\nchairs\ncleaning\nglass\nvacuum\ncleaner\nplant\nfloor\nmats\nfreezer\nshelves\ninterior\ntrim\nloose\nsoil\nwater\ncloset\ngarden\nhousehold\ncleaning\ncloth",
+    ),
+    array(
+      'vid' => OFFERS_WANTS_VID,
+      'name' => 'Transport', 
+      'weight' => 8,
+      'synonyms' => "bicycle\nbike\nhelmet\ntransport\ntrain\nrail\nairport\nbike\nscooter\nbicycle\ntruck\nroutes\ncampaign\nvan\nminibus\ntransport\ncar\nmoving\nbike\ntrailer\nticket",
+    ),
+    array(
+      'vid' => OFFERS_WANTS_VID,
+      'name' => 'Health & Body',
+      'weight' => 9,
+      'synonyms' => "sitting\nvisceral\nbeauty\ncare\nsit\nchildre\nhaircut\nscrub\nmask\nsacred\nspirit\nmassage\ntherapy\ncoaching\nshaman\nhealer\nacne\noil\nReiki\nmeditation\nhealth\ngenealogical\ndisability\nbabysitting\naloe\nfascia\ncare\nacupuncture\ntherapy\nosteopathy\nhomeopathic\nlistening\ndifficulties\nmuscle\ndyeing\nhair\nremoval\ntame\nmigraine\nsensory\nstress\ncabinet\ngymnastic",
+    ),
+    array(
+      'vid' => OFFERS_WANTS_VID,
+      'name' => 'Sports & holidays', 
+      'weight' => 10,
+      'synonyms' => "underwater\nwalking\nstay\nrental\npunch\nbag\nGPS\nsailboat\nstay\novernight\nhiking\nsnowshoeing\ncanoe\nrental\ntent\nwalking\nski\nsnowboard\nattire\ndive\ntrip\nride\nsnowshoe\nhiking\ntrip\ndiscovered\nvacancy",
+    ),
+    array(
+      'vid' => OFFERS_WANTS_VID,
+      'name' => 'Clothing', 
+      'weight' => 11,
+      'synonyms' => "clothing\njeans\nskirts\ndress\nsock\npurse\napron\ndress\nwatches\nsandals\nshirt\nshoes\npants\nshirt\njacket\nhandbags\ncoat\njacket\nwaist\ncoat\njacket\nglove\njacket\nsocks\ncap\nhat",
+    ),
+    array(
+      'vid' => OFFERS_WANTS_VID,
+      'name' => 'Miscellaneous', 
+      'weight' => 12,
+      'synonyms' => ''
+    ),
+    //document types
+    array('vid' => DOCTYPE_VID, 
+      'name' => 'Our LETS', 
+      'weight' => 1, 
+      'description' => 'Documents associated with this group'
+	),
+    array(
+      'vid' => DOCTYPE_VID, 
+      'name' => 'Media coverage', 
+      'weight' => 2, 
+      'description' => 'Press, media and internet exposure.'
+    ),
+    array('vid' => DOCTYPE_VID, 
+      'name' => 'Publicity materials', 
+      'weight' => 3, 
+      'description' => 'Leaflets, posters etc.'
+	),
+    array('vid' => DOCTYPE_VID, 
+      'name' => 'Minutes', 
+      'weight' => 4, 
+      'description' => 'Create your meeting agenda, and after the meeting edit the agenda so it can be viewed as minutes'
+	),
+    array('vid' => DOCTYPE_VID, 
+      'name' => 'Misc', 
+      'weight' => 6, 
+      'description' => 'Anything else'
+	),
+	//image gallery
+    array(
+      'vid' => GALLERY_VID,
+      'name' => 'LETS life',
+      'weight' => 3,
+    ),
+    //simplenews default category
+    array(
+      'vid' => SIMPLENEWS_VID,
+      'name' => 'Governance',
+      'weight' => 0,
+      'description' => 'A newsletter for the decision makers'
+    ),
+  );
+  return $terms;
+}

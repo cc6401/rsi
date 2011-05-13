@@ -1,0 +1,80 @@
+# $Id$
+#
+# French translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  cforge_print.module: n/a
+#  cforge_print.info: n/a
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2010-01-12 17:10+0300\n"
+"PO-Revision-Date: 2010-01-13 10:32+0100\n"
+"Last-Translator: Tim Anderson <timcarouge@gmail.com>\n"
+"Language-Team: French <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n>1);\n"
+
+#: cforge_print.module:44
+msgid "Choose the letter of the surname of the member you are trying to find below and/or sort by column to find an e-member quickly."
+msgstr "Choisissez la lettre du nom de famille ci-dessous et/ou triez par colonne pour trouver un adhérent rapidement."
+
+#: cforge_print.module:45
+msgid "Once on a member's page, you can easily enter a trade with them using the using the block to the left."
+msgstr "Une fois sur leur profil, vous pouvez facilement saisir un échange avec eux à l'aide du bloc à gauche."
+
+#: cforge_print.module:52;56
+msgid "< refine your search by using the categories shown on the left."
+msgstr "< affinez votre recherche avec les catégories à gauche."
+
+#: cforge_print.module:61;62;74
+msgid "Printer-friendly version"
+msgstr "Version imprimable"
+
+#: cforge_print.module:113
+msgid "Member's Directory"
+msgstr "Liste des Adhérents"
+
+#: cforge_print.module:120
+msgid "Offers & Wants"
+msgstr "Offres & Demandes"
+
+#: cforge_print.module:124
+msgid "Wants directory"
+msgstr "Liste des Demandes"
+
+#: cforge_print.module:129
+msgid "Offers directory"
+msgstr "Liste des Offres"
+
+#: cforge_print.module:195
+msgid "Description"
+msgstr "Description"
+
+#: cforge_print.module:195
+msgid "Member"
+msgstr "Adhérent"
+
+#: cforge_print.module:195
+msgid "Posted on"
+msgstr "du"
+
+#: cforge_print.module:85;92
+msgid "Print Directory"
+msgstr "Liste des imprimables"
+
+#: cforge_print.info:0
+msgid "Cforge printable directories"
+msgstr "Listes imprimable CommunityForge.net"
+
+#: cforge_print.info:0
+msgid "Implements link to printerfriendly pages of wants, offers and members."
+msgstr "Ajoute des liens à la version imprimable des offres, des demandes et des adhérents"
+
+#: cforge_print.info:0
+msgid "Complementary Currencies"
+msgstr "Monnaies Complémentaires"
+

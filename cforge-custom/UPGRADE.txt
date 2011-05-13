@@ -1,0 +1,27 @@
+INTRO
+Starter and Completer no longer exist, instead there is payer, payee, and signatories
+all views will be replaced
+some blocks will be migrated
+check all your theme customisations
+(optional, to be tidy, move the 3 files extensions/offer_want to their own module folder and replace the whole mutual_credit )
+
+PROCEDURE
+
+edit virtualHost
+put the site into maintenance mode
+drush -y @site dis transactions //will disable all dependents, including cforge_custom
+drush -y @site dis cc_offer_want //will disable all dependents, including cforge_customdelete user 0 
+copy database
+move the directory from cforge to alpha 7
+make new aliases
+move sites directory
+restart apache
+
+-- Change theme, update cforge_custom module, insert new modules
+drush -y @site en mcapi
+drush -y @site en cforge_custom
+drush -y @site up 
+
+check transaction types and currency symbol
+stats need jump starting
+Check node/add

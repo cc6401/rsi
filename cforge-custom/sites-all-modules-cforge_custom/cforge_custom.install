@@ -1,0 +1,883 @@
+<?php 
+//duplicated in the module file...
+define('OFFERS_WANTS_VID', 1);
+define('SIMPLENEWS_VID', 2);
+define('GALLERY_VID', 3);
+define('DOCTYPE_VID', 4);
+//roles
+define('RID_TRADER', 3);
+define('RID_COMMITTEE', 4);
+define('RID_ACCOUNTANT', 5);
+define('RID_LOCAL_ADMIN', 6);
+define('RID_SYSTEM', 7);
+
+/*
+ * implementation of hook_install
+ */
+
+function cforge_custom_requirements($phase) {
+  if ($phase == 'install'){
+    db_query("UPDATE {system} SET weight = 50 WHERE name = 'cforge_custom';");
+    if (!module_exists('date'))drupal_install_modules(array('date'));
+  }
+  return requirements;
+}
+
+function cforge_custom_enable() {
+  drupal_set_message(t('To complete the cforge installation, and to refresh menu links, user profile fields, and blocks, visit !link',
+    array(
+        '!link' => l('/cforge_custom_refresh', 'cforge_custom_refresh'))
+  ));
+}
+function cforge_custom_install(){
+  //edit the number 1 account
+  $roles = array(RID_TRADER => RID_TRADER, RID_COMMITTEE => RID_COMMITTEE, RID_ACCOUNTANT => RID_ACCOUNTANT, RID_LOCAL_ADMIN => RID_LOCAL_ADMIN, RID_SYSTEM => RID_SYSTEM);
+  user_save(user_load(1), array('roles' => $roles));
+
+  /*
+   * Language specific stuff
+   */
+  global $language;
+  $filename = 'cforge_custom.'.$language->language .'.import';
+  drupal_set_message("importing with file $filename");
+  if (file_exists(drupal_get_path('module', 'cforge_custom'). '/'.$filename)) {
+    module_load_include($language->language .'.import', 'cforge_custom');
+  }
+  else {
+    module_load_include('en.import', 'cforge_custom');
+  }
+
+  // $long, medium and short are set in the language specific file, at the top
+  db_query("UPDATE {date_formats} SET format = '%s' WHERE type = 'custom' AND locked = 1", $short);
+  db_query("UPDATE {date_formats} SET format = '%s' WHERE type = 'custom' AND locked = 1", $medium);
+  db_query("UPDATE {date_formats} SET format = '%s' WHERE type = 'custom' AND locked = 1", $long);
+
+  //rename the content types created in the default profile
+  db_query("UPDATE {node_type} SET name = '%s' where type = '%s'", array(':name'=> t('Document'), ':type' => 'page'));
+  db_query("UPDATE {node_type} SET name = '%s' where type = '%s'", array(':name'=> t('Article'), ':type' => 'story'));
+  
+  $vocab = array(
+    'name' => t('Document types'),
+    'description' => t('Choose a category to make this page appear on the documents page'),
+    'help' => t('Choose a category to make this page appear on the documents page'),
+    'tags' => 0,
+    'multiple' => 0,
+    'required' => 0,
+    'nodes' => array(
+      'page' => 'page',
+    ),
+    'auto' => 0,
+    'hierarchy' => 0,
+    'relations' => '',
+    'module' => 'cforge_custom',
+  );
+  taxonomy_save_vocabulary($vocab);
+
+  //reset all the vids, but not directly, so as to avoid conflicts
+  $vids = array(
+    OFFERS_WANTS_VID => db_result(db_query("SELECT vid FROM {vocabulary} WHERE module = 'mc_offer_want'")),
+    SIMPLENEWS_VID => db_result(db_query("SELECT vid FROM {vocabulary} WHERE module = 'simplenews'")),
+    GALLERY_VID => db_result(db_query("SELECT vid FROM {vocabulary} WHERE module = 'image_gallery'")),
+    DOCTYPE_VID => db_result(db_query("SELECT vid FROM {vocabulary} WHERE module = 'cforge_custom'")),
+  );
+  foreach ($vids as $new => $old) {
+    $tmp = $old+10;
+    db_query("UPDATE {vocabulary} SET vid = $tmp WHERE vid = $old");
+    db_query("UPDATE {vocabulary_node_types} SET vid = $tmp WHERE vid = $old");
+    db_query("UPDATE {term_data} SET vid = $tmp WHERE vid = $old");
+  }
+  foreach ($vids as $new => $old) {
+    $tmp = $old+10;
+    db_query("UPDATE {vocabulary} SET vid = $new WHERE vid = $tmp");
+    db_query("UPDATE {vocabulary_node_types} SET vid = $new WHERE vid = $tmp");
+    db_query("UPDATE {term_data} SET vid = $new WHERE vid = $tmp");
+  }
+
+  
+  //create roles
+  db_query("INSERT INTO {role} (rid, name) 
+      VALUES (%d, 'trader'), (%d, 'committee'), (%d, 'accountant'), (%d, 'local admin'), (%d, 'system');",
+    array(RID_TRADER, RID_COMMITTEE, RID_ACCOUNTANT, RID_LOCAL_ADMIN, RID_SYSTEM)
+  );
+
+  //Allow committee to use html filter
+  db_query("UPDATE {filter_formats} SET roles = ',%d,' WHERE name = 'Full HTML'", array(RID_COMMITTEE));
+  //Add all roles to admin except system
+
+  //set up mutual_credit
+  cforge_set_variables(); //in the language import file
+  variable_set('mc_notification_default', 1);
+  variable_set('mc_notification_option', 1);
+  variable_set('mc_notification_throttle_default', 2);
+  variable_set('mc_sig_notification_default', 1);
+  variable_set('mc_sig_notification_option', 1);
+  //These need to be translated to Englisn and moved to the .import files
+  variable_set('mc_notification_subject', "Echange saisi sur !site avec !username");
+  variable_set('mc_notification_body', "Bonjour !username,\n\nUn échange a était enregistré.");
+  variable_set('mc_notification_update_body', 'Bonjour !username,\n\nCet échange saisi précédement avec vous a était modifié :\n!summary');
+  variable_set('mc_notification_update_subject', "Modification d'échange sur !site");
+  variable_set('mc_signatures_notification_subject', "Veuillez confirmer cet échange sur !site");
+  variable_set('mc_signatures_notification_body', "Veuillez cliquer sur ce lien pour confirmer (et comptabiliser) l'échange : !sign_link");
+  variable_set('mc_stats_exclude', '1');
+  variable_set('mc_tabs_css', 'tab-wrapper');
+  variable_set('mc_live_stats', TRUE);
+
+  //set the exchange types for the default currency
+  $data = unserialize(db_result(db_query("SELECT data from {mc_currencies}")));
+  $data['subtype_bitmask'] = 12;
+  db_query('UPDATE {mc_currencies} SET data = "%s"', serialize($data));
+
+
+  variable_set('cforge_report', 1);
+  variable_set('clean_url', "1");
+  variable_set('upload_uploadsize_default', 5);
+  variable_set('upload_usersize_default', 25);
+  variable_set('date_default_timezone', "7200");
+  variable_set('date_default_timezone_name', "Europe/Zurich");
+  variable_set('image_attach_story', "1");
+  variable_set('ld_url_destination', "news/recent");
+  variable_set('upload_event', "1");
+  variable_set('upload_community_task', "1");
+  variable_set('upload_documents', "1");
+  variable_set('upload_members_only', "1");
+  variable_set('upload_page', "1");
+  variable_set('upload_simplenews', "FALSE");
+  variable_set('user_pictures', "1");
+  variable_set('user_picture_dimensions', '1280x1024');
+  variable_set('user_picture_file_size', '1024');
+  variable_set('user_picture_default', 'sites/all/themes/sky_seldulac/anonymous.jpg');
+  variable_set('l10n_client_server', "http://localize.drupal.org");
+  variable_set('l10n_client_use_server', '4');
+  variable_set('l10n_update_check_disabled', "0");
+  variable_set('l10n_update_check_frequency', "1");
+  variable_set('l10n_update_check_mode', "3");
+  variable_set('l10n_update_download_store', "sites/all/translations");
+  variable_set('l10n_update_import_mode', "0");
+  variable_set('image_attach_simplenews', TRUE);
+  variable_set('image_attach_size_body_simplenews', 'preview');
+  variable_set('image_attach_size_teaser_simplenews', 'thumbnail');
+  variable_set('image_attach_story', TRUE);
+  variable_set('image_attach_size_body_story', 'preview');
+  variable_set('image_attach_size_teaser_story', 'thumbnail');
+  variable_set('image_attach_page', TRUE);
+  variable_set('image_attach_size_body_page', 'preview');
+  variable_set('image_attach_size_teaser_page', 'thumbnail');
+  variable_set('image_gallery_nav_vocabulary', GALLERY_VID);
+  variable_set('captcha_persistance', '1');
+  variable_set('captcha_default_challenge', 'captcha/Math');
+  variable_set('captcha_description', t('This is to prevent robots creating accounts'));
+  variable_set('comment_image', 2);
+  variable_set('comment_page', 2);
+  variable_set('comment_story', 2);
+  variable_set('site_frontpage', "home");
+  variable_set('theme_settings', array(
+    'toggle_logo'=>TRUE,
+    'toggle_name'=>TRUE,
+    'toggle_slogan'=>1,
+    'toggle_mission'=>0,
+    'toggle_node_user_picture'=>0,
+    "toggle_comment_user_picture"=>0,
+    "toggle_search"=>1,
+    "toggle_favicon"=>1,
+    "toggle_primary_links"=>1,
+    "toggle_secondary_links"=>1,
+    "toggle_node_info_event"=>1,
+    "toggle_node_info_faq"=>0,
+    "toggle_node_info_image"=>1,
+    "toggle_node_info_story"=>0,
+    "toggle_node_info_offer"=>1,
+    "toggle_node_info_page"=>0,
+    "toggle_node_info_exchange"=>1,
+    "toggle_node_info_want"=>1,
+    "default_favicon"=>1,
+    "default_logo"=>1,
+  ));
+  variable_set('theme_sky_seldulac_settings', array(
+    'sky_seldulac_breadcrumbs' => 0,
+    'sky_seldulac_breadcrumbs_sep' => '&raquo;',
+    'sky_seldulac_font' => 'lucida',
+    'sky_seldulac_font_headings' => 'lucida',
+    'sky_seldulac_font_size' => '12px',
+    'sky_seldulac_header_height' => 'auto',
+    'sky_seldulac_layout' => 'fluid_98',
+    'sky_seldulac_title' => 1,
+    'sky_seldulac_nav_alignment' => 'center',
+    'sky_seldulac_sub_navigation_size' => '15em',
+    'sky_seldulac_wireframe' => '0',
+    'sky_seldulac_themer_classes' => 0
+  ));
+  variable_set('simplenews_vid', SIMPLENEWS_VID);
+  variable_set('autocategorise_vids', array(OFFERS_WANTS_VID => TRUE));
+  variable_set('views_block_hashes', array(
+    "0fd7b87c51fff410ede51862eaa2f92a"=>"mc_directory_recent_offers-block_1",
+    "3454e7dc74c6d6ffa4f3febe616b23fd"=>"mc_directory_recent_wants-block_1",
+  ));
+  $image_sizes = array(
+    '_original' => array(
+      'label' => t('Original'),
+      'operation' => 'scale',
+      'width' => '',
+      'height' => '',
+      'link' => 1,
+    ),
+    'thumbnail' => array(
+      'label' => t('Vignette'),
+      'operation' => 'scale',
+      'width' => 150,
+      'height' => 150,
+      'link' => 1,
+    ),
+    'preview' => array(
+      'label' => t('Preview'),
+      'operation' => 'scale',
+      'width' => 640,
+      'height' => 640,
+      'link' => 1,
+    )
+  );
+  variable_set('image_sizes', $image_sizes);
+
+  //imagecache presets
+  variable_set('user_picture_imagecache_comments', 'user_image_default');
+  variable_set('user_picture_imagecache_profiles', 'user_image_default');
+  variable_set('user_picture_imagecache_profiles_default', 'user_image_default');
+  variable_set('user_picture_imagecache_profiles_min_height', '150');
+  variable_set('user_picture_imagecache_profiles_min_width', '150');
+  variable_set('preprocess_css', TRUE);
+  variable_set('preprocess_js', TRUE);
+
+
+
+  //import the event contentType, with it's datetime field,
+  //from an included file, which is a dump generated by content_copy module
+  include_once './'. drupal_get_path('module', 'node') .'/content_types.inc';
+  include_once('./'. drupal_get_path('module', 'content') .'/includes/content.admin.inc');
+  $form_state['values']['type_name'] ='<create>';
+  $form_state['values']['macro'] = file_get_contents(drupal_get_path('module', 'cforge_custom') .'/cforge_custom.cck.inc');
+  drupal_execute("content_copy_import_form", $form_state);
+  content_clear_type_cache();
+  drupal_uninstall_module('content_copy');
+
+
+  cforge_import_nodes();
+
+  $terms = cforge_import_taxonomy();
+  foreach ($terms as $term) {
+    taxonomy_save_term($term);
+  }
+  module_load_include('module', 'cforge_custom');
+  //set up the profile fields, blocks, menu items and permissions
+  cforge_custom_refresh();
+
+}
+
+function cforge_profile_fields() {
+  $fields = array(
+    'profile_firstname' => array(t('First name'), '', t('Details'), 'textfield', -20, 1, 1, 2, 0),
+    'profile_familyname' => array(t('Family name'), '', t('Details'), 'textfield', -19, 1, 1, 2, 0),
+    'profile_responsibility' => array(t('Responsibility'), t('Job title, for committee members only'), t('Details'), 'textfield', -15, 0, 0, 2, 0),
+    'profile_phone1' => array(t('Phone Number 1'), '', t('Details'), 'textfield', 0, 0, 1, 1, 0),
+    'profile_phone2' => array(t('Phone Number 2'), '', t('Details'), 'textfield', 0, 0, 1, 1, 0),
+    'profile_locality' => array(t('Area Code'), t('This may be the zip code, or some other way to group the members geographically'), t('Details'), 'textfield', 11, 0, 1, 2, 0),
+    'profile_postal' => array(t('Postal member'), t('Please post printed directories to me '), t('Details'), 'checkbox', 21, 0, 1, 2, 0),
+    'profile_address' => array(t('Address'), t('This is necessary if you want to receive printed updates'), t('Details'), 'textarea', 10, 0, 1, 2, 0),
+    'profile_notes' => array(t('Notes'), t('This is for any additional notes.'), t('Details'), 'textarea', 50, 0, 1, 2, 0),
+  );
+  foreach ($fields as $name => $values) {
+    if (db_result(db_query("SELECT name FROM {profile_fields} WHERE name = '%s'", array(':name' => $name)))) {
+      db_query("UPDATE {profile_fields}
+        SET title = '%s', explanation = '%s', category = '%s', type = '%s', weight = '%d', required = '%d', register = '%d', visibility = '%d', autocomplete = '%d'
+        WHERE name = '%s'", $values + array($name)
+      );
+    }
+    else {
+      drupal_set_message("inserting $name");
+      db_query("INSERT into {profile_fields}
+        (name, title, explanation, category, type, weight, required, register, visibility, autocomplete)
+        VALUES ('%s', '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d)",
+        array('name' => $name) + $values
+      );
+    }
+  }
+}
+  function refresh_custom_menus() {
+    db_query("REPLACE INTO {menu_custom} (menu_name, title) VALUES ('setup', '%s'), ('manage', '%s'), ('visitors', '%s')",
+      array(
+        ':setup' => t('Setup'),
+        ':manage' => t('Manage'),
+        ':visitors' => t('Visitors'),
+      )
+    );
+  }
+//this is kept separate because it must only be run once and it's a pig to undo
+function cforge_menu_items() {
+  refresh_custom_menus();
+  db_query("DELETE FROM {menu_links} WHERE menu_name = 'setup' OR menu_name = 'manage'");
+  //These menu titles won't translate if they are different to the item in the router table.
+  //That's why most of the are translated here, as they are set up
+  //only problem is that the po file hasn't been installed yet.
+  $new_items[] = array(
+    'link_path' => 'admin/settings/site-information',
+    'link_title' => 'Site information',
+    'module' => 'cforge_custom',
+    'menu_name' => 'setup',
+    'options' => array(
+      'attributes' => array(
+        'title' => t("Change basic site information, such as the site name, slogan, e-mail address, mission, front page and more.")
+        )
+      ),
+    'weight' => '-50',
+  );
+
+  $new_items[] = array(
+    'link_path' => 'admin/build/themes/settings/sky_seldulac',
+    'link_title' => t('Upload Logo'),
+    'module' => 'cforge_custom',
+    'menu_name' => 'setup',
+    'options' => array(
+      'attributes' => array(
+        'title' => t('Upload the main picture in the top left of the screen')
+        )
+      ),
+    'weight' => '-49',
+  );
+  $cid = db_result(db_query("SELECT nid from {node} WHERE type = 'currency'"));
+  $new_items[] = array(
+    'link_path' => 'node/'.$cid.'/edit',
+    'link_title' => t('Default currency'),
+    'module' => 'cforge_custom',
+    'menu_name' => 'setup',
+    'options' => array(
+      'attributes' => array(
+        'title' => t("Setup a default currency, exchange and directory settings.")
+        )
+      ),
+    'weight' => '-48',
+  );
+  $new_items[] = array(
+    'link_path' => 'admin/user/settings',
+    'link_title' => t('Welcome email'),
+    'module' => 'cforge_custom',
+    'menu_name' => 'setup',
+    'options' => array(
+      'attributes' => array(
+        'title' => t("Compose the e-mail to be sent on welcoming user.")
+        )
+      ),
+    'weight' => '-47',
+  );
+  //notification will have to do for now but I really don't know when to obtain or fix the Action ID
+  //actions have not yet been 'synchronised' in http://api.drupal.org/api/function/system_modules_submit
+  $new_items[] = array(
+    'link_path' => 'admin/mc/notification',
+    'link_title' => t('Mail notifications'),
+    'module' => 'cforge_custom',
+    'menu_name' => 'setup',
+    'weight' => '-46',
+  );
+  $new_items[] = array(
+    'link_path' => 'admin/build/contact',
+    'link_title' => t('Contact form'),
+    'module' => 'cforge_custom',
+    'menu_name' => 'setup',
+    'options' => array(
+      'attributes' => array(
+        'title' => t("Setup up site wide & member contacts.")
+        )
+      ),
+    'weight' => '-45',
+  );
+
+  //'manage' Menu
+  $new_items[] = array(
+    'link_path' => 'admin/content/node',
+    'link_title' => 'Content',
+    'module' => 'cforge_custom',
+    'menu_name' => 'manage',
+    'options' => array(
+      'attributes' => array(
+        'title' => t("Manage the contents of a page")
+        )
+      ),
+    'weight' => '-50',
+  );
+  $new_items[] = array(
+    'link_path' => 'admin/user/user',
+    'link_title' => t('User management'),
+    'module' => 'cforge_custom',
+    'menu_name' => 'manage',
+    'options' => array(
+      'attributes' => array(
+        'title' => t("List, add and modify users")
+        )
+      ),
+    'weight' => '-49',
+  );
+  $new_items[] = array(
+    'link_path' => 'admin/content/image',
+    'link_title' => t('Manage Galleries'),
+    'module' => 'cforge_custom',
+    'menu_name' => 'manage',
+    'options' => array(
+      'attributes' => array(
+        'title' => t("Create and manage image galleries")
+        )
+      ),
+    'weight' => '-48',
+  );
+
+  $new_items[] = array(
+    'link_path' => 'admin/content/taxonomy/'.strval(OFFERS_WANTS_VID),
+    'link_title' => t('Categories'),
+    'module' => 'cforge_custom',
+    'menu_name' => 'manage',
+    'options' => array(
+      'attributes' => array(
+        'title' => t("The categories of your offers and wants")
+        )
+      ),
+    'weight' => '-47',
+  );
+
+  $new_items[] = array(
+    'link_path' => 'admin/content/taxonomy/'.strval(DOCTYPE_VID),
+    'link_title' => t('Document Types'),
+    'module' => 'cforge_custom',
+    'menu_name' => 'manage',
+    'options' => array(
+      'attributes' => array(
+        'title' => t("Categories for your documents")
+        )
+      ),
+    'weight' => '-47',
+  );
+  $new_items[] = array(
+    'link_path' => 'admin/build/menu-customize/visitors',
+    'link_title' => t('Visitor menu'),
+    'module' => 'cforge_custom',
+    'menu_name' => 'manage',
+    'options' => array(
+      'attributes' => array(
+        'title' => t("Manage contents of the menu for anonymous users.")
+        )
+      ),
+    'weight' => '-45',
+  );
+  $new_items[] = array(
+    'link_path' => 'admin/build/menu-customize/primary-links',
+    'link_title' => t('Major menu'),
+    'module' => 'cforge_custom',
+    'menu_name' => 'manage',
+    'options' => array(
+      'attributes' => array(
+        'title' => t("Manage the primary members menu, organising offers, wants, etc.")
+        )
+      ),
+    'weight' => '-44',
+  );
+  $new_items[] = array(
+    'link_path' => 'admin/build/menu-customize/secondary-links',
+    'link_title' => t('Minor menu'),
+    'module' => 'cforge_custom',
+    'menu_name' => 'manage',
+    'options' => array(
+      'attributes' => array(
+        'title' => t("Manage secondary member options, contact, galleries, etc.")
+        )
+      ),
+    'weight' => '-43',
+  );
+  $new_items[] = array(
+    'link_path' => 'admin/content/simplenews',
+    'link_title' => t('Newsletter content'),
+    'module' => 'cforge_custom',
+    'menu_name' => 'manage',
+    'options' => array(
+      'attributes' => array(
+        'title' => t("Manage newsletter content, subscriptions, etc.")
+        )
+      ),
+    'weight' => '-42',
+  );
+  foreach ($new_items as $new_item)  {
+    menu_link_save($new_item);
+  }
+}
+
+function cforge_reset_permissions() {
+    //set the permissions for those roles
+  db_query("REPLACE INTO `permission` (`rid`, `perm`) VALUES
+    (%d, 'access site-wide contact form, view original images, view imagecache user_image_default, view imagecache user_image_large, view exchange stats, search content, view uploaded files, access content'),
+    (%d, 'view tasks, access site-wide contact form, view original images, view imagecache user_image_default, view imagecache user_image_large, view directory, view exchange stats, access content, search content, subscribe to newsletters, view uploaded files, access user profiles'),
+    (%d, 'post comments, commit to tasks, view all balances, create offer, create want, exchange, view all exchanges'),
+    (%d, 'committee, edit tasks, attach images, administer image galleries, edit directory, create 3rdparty exchanges, administer menu, administer nodes, create event content, create page content, create simplenews content, create story content, create url aliases, administer role expire, administer newsletters, send newsletter, administer simplenews subscriptions, administer taxonomy, upload files, administer permissions, administer users, import users'),
+    (%d, 'edit all exchanges, create 3rdparty exchanges'),
+    (%d, 'local admin, administer site-wide contact form, delete any images, edit any images, translate interface, configure currencies, edit all exchanges, delete any event content, delete any page content, delete any simplenews content, delete any story content, edit any event content, edit any page content, edit any simplenews content, edit any story content, administer actions'),
+    (%d, 'exchange');",
+    array(DRUPAL_ANONYMOUS_RID, DRUPAL_AUTHENTICATED_RID, RID_TRADER, RID_COMMITTEE, RID_ACCOUNTANT, RID_LOCAL_ADMIN, RID_SYSTEM)
+  );
+}
+
+function cforge_reset_blocks() {
+//this was the only available theme for the first year, all the regions were wrong
+  drupal_set_message('re-placing blocks for sky_seldulac theme');
+  db_query("REPLACE INTO `blocks` (`module`, `delta`, `theme`, `status`, `weight`, `region`, `custom`, `throttle`, `visibility`, `pages`, `title`, `cache`) VALUES
+    ('search', '0', 'sky_seldulac', 1, 2, 'contenttop', 0, 0, 0, '', '<none>', -1),
+    ('menu', 'secondary-links', 'sky_seldulac', 1, 3, 'contenttop', 0, 0, 0, '', '<none>', -1),
+    ('user', '0', 'sky_seldulac', 1, -5, 'right', 0, 0, 0, '', '', -1),
+    ('views', 'mc_exchanges_pending-block_1', 'sky_seldulac', 1, 0, 'right', 0, 0, 0, '', '', -1),
+    ('menu', 'setup', 'sky_seldulac', 1, 1, 'right', 1, 0, 0, '', '', -1),
+    ('menu', 'manage', 'sky_seldulac', 1, 2, 'right', 0, 0, 0, '', '', -1),
+    ('user', '0', 'sky_seldulac', 1, -9, 'right', 0, 0, 1, 'home', '', -1),
+    ('user', '1', 'sky_seldulac', 1, -10, 'right', 0, 0, 0, '', '', -1),
+    ('image', '1', 'sky_seldulac', 1, 4, 'right', 0, 0, 1, 'home\nshare\nstart\ncommit\nnews/recent\ndocs\nlets\ncontacts\nmembers\nrequests\nacknowledgements', 'La vie au SEL', 1),
+    ('user', '1', 'sky_seldulac', 1, -20, 'right', 0, 0, 0, '', '', -1),
+    ('menu', 'manage', 'sky_seldulac', 1, 2, 'right', 0, 0, 0, '', '', -1),
+    ('menu', 'setup', 'sky_seldulac', 1, 1, 'right', 1, 0, 0, '', '', -1),
+    ('user', '0', 'sky_seldulac', 1, 0, 'right', 0, 0, 0, '', '', -1),
+    ('mc_offer_want', 'cc_categories', 'sky_seldulac', 1, -25, 'left', 0, 0, 1, 'directory*\nnode/add/offer\nnode/add/want', '', 4),
+    ('cforge_custom', 'jumpdown', 'sky_seldulac', 1, -24, 'left', 0, 0, 1, 'faq\r\ndocs\r\nimage\r\nlets', '', 4),
+    ('views', 'calendar-calendar_block_1', 'sky_seldulac', 1, -23, 'left', 0, 0, 1, 'home\r\nnews/recent\r\nnode/add\r\nimage/\r\ndocs', 'Activités ".str_replace("'", "", variable_get('site_name', ''))."', -1),
+    ('calendar', '0', 'sky_seldulac', 1, -22, 'left', 0, 0, 1, 'calendar*', '', 1),
+    ('block', '1', 'sky_seldulac', 1, -21, 'left', 0, 0, 1, 'home\r\nLETS', '', -1),
+    ('views', 'calendar-block_1', 'sky_seldulac', 1, -20, 'left', 0, 0, 0, '', '', -1),
+    ('mc_offer_want', 'cc_add_item', 'sky_seldulac', 1, -19, 'left', 0, 0, 1, 'directory*', '', 4),
+    ('mc_webform_1stparty', 'start_exchange', 'sky_seldulac', 1, -18, 'left', 0, 0, 1, 'user*\nexchanges\nmembers*', '', 1),
+    ('user', '2', 'sky_seldulac', 1, -17, 'left', 0, 0, 1, 'home\nnews/recent\nmembers', '', -1),
+    ('views', '0fd7b87c51fff410ede51862eaa2f92a', 'sky_seldulac', 1, -16, 'left', 0, 0, 1, '\nexchanges\ndirectory/recent_offers/*', '', -1),
+    ('views', '3454e7dc74c6d6ffa4f3febe616b23fd', 'sky_seldulac', 1, -15, 'left', 0, 0, 1, 'exchanges\ndirectory/recent_wants/*', '', -1),
+    ('views', 'mc_exchanges_all-block-2', 'sky_seldulac', 1, 1, 'left', 0, 0, 1, 'home', '', -1),
+    ('views', 'mc_exchanges_pending-block_2', 'sky_seldulac', 1, 0, 'contentbottom', 0, 0, 1, 'user*', '', -1),
+    ('views', 'mc_exchanges_pending-block_3', 'sky_seldulac', 1, 1, 'contentbottom', 0, 0, 1, 'user*', '', -1),
+    ('mc_stats', 'mc_stat_summary', 'sky_seldulac', 1, 0, 'footer', 0, 0, 0, '', '', 1);"
+  );
+
+  global $theme;
+  if ($theme != 'sky_seldulac') {
+  drupal_set_message('re-placing blocks in default regions');
+  db_query("REPLACE INTO `blocks` (`module`, `delta`, `theme`, `status`, `weight`, `region`, `custom`, `throttle`, `visibility`, `pages`, `title`, `cache`) VALUES
+    ('user', '0', 'cforge_subtheme', 1, -5, 'right', 0, 0, 0, '', '', -1),
+    ('views', 'mc_exchanges_pending-block_1', 'cforge_subtheme', 1, 0, 'right', 0, 0, 0, '', '', -1),
+    ('menu', 'setup', 'cforge_subtheme', 1, 1, 'right', 1, 0, 0, '', '', -1),
+    ('menu', 'manage', 'cforge_subtheme', 1, 2, 'right', 0, 0, 0, '', '', -1),
+    ('user', '0', 'cforge_subtheme', 1, -9, 'right', 0, 0, 1, 'accueil', '', -1),
+    ('user', '1', 'cforge_subtheme', 1, -10, 'right', 0, 0, 0, '', '', -1),
+    ('image', '1', 'cforge_subtheme', 1, 4, 'right', 0, 0, 1, 'home\nshare\nstart\ncommit\nnews/recent\ndocs\nlets\ncontacts\nmembers\nrequests\nacknowledgements', 'La vie au SEL', 1),
+    ('user', '1', 'cforge_subtheme', 1, -20, 'right', 0, 0, 0, '', '', -1),
+    ('menu', 'manage', 'cforge_subtheme', 1, 2, 'right', 0, 0, 0, '', '', -1),
+    ('menu', 'setup', 'cforge_subtheme', 1, 1, 'right', 1, 0, 0, '', '', -1),
+    ('user', '0', 'cforge_subtheme', 1, 0, 'right', 0, 0, 0, '', '', -1),
+    ('search', '0', 'cforge_subtheme', 1, -25, 'left', 0, 0, 0, '', '<none>', -1),
+    ('mc_offer_want', 'cc_categories', 'cforge_subtheme', 1, -25, 'left', 0, 0, 1, 'directory*', '', 4),
+    ('cforge_custom', 'jumpdown', 'cforge_subtheme', 1, -24, 'left', 0, 0, 1, 'faq\r\ndocs\r\nimage\r\nlets', '', 4),
+    ('views', 'calendar-calendar_block_1', 'cforge_subtheme', 1, -23, 'left', 0, 0, 1, 'home\r\nnews/recent\r\nnode/add\r\nimage/\r\ndocs', 'Activités ".str_replace("'", "", variable_get('site_name', ''))."', -1),
+    ('calendar', '0', 'cforge_subtheme', 1, -22, 'left', 0, 0, 1, 'calendar*', '', 1),
+    ('block', '1', 'cforge_subtheme', 1, -21, 'left', 0, 0, 1, 'home\r\nLETS', '', -1),
+    ('menu', 'secondary-links', 'cforge_subtheme', 1, -21, 'left', 0, 0, 0, '', '<none>', -1),
+    ('views', 'calendar-block_1', 'cforge_subtheme', 1, -20, 'left', 0, 0, 0, '', '', -1),
+    ('mc_offer_want', 'cc_add_item', 'cforge_subtheme', 1, -19, 'left', 0, 0, 1, 'directory*', '', 4),
+    ('mc_webform_1stparty', 'start_exchange', 'cforge_subtheme', 1, -18, 'left', 0, 0, 1, 'user*\nexchanges\nmembers*', '', 1),
+    ('user', '2', 'cforge_subtheme', 1, -17, 'left', 0, 0, 0, 'home\nnews/recent\nmembers', '', -1),
+    ('devel', '2', 'cforge_subtheme', 1, -14, 'left', 0, 0, 0, 'devel/php', '', 1),
+    ('views', '0fd7b87c51fff410ede51862eaa2f92a', 'cforge_subtheme', 1, -16, 'left', 0, 0, 1, '\nexchanges\ndirectory/recent_offers/*', '', -1),
+    ('views', '3454e7dc74c6d6ffa4f3febe616b23fd', 'cforge_subtheme', 1, -15, 'left', 0, 0, 1, 'exchanges\ndirectory/recent_wants/*', '', -1),
+    ('views', 'mc_exchanges_pending-block_2', 'cforge_subtheme', 1, 0, 'content', 0, 0, 0, 'user*', '', -1),
+    ('views', 'mc_exchanges_pending-block_3', 'cforge_subtheme', 1, 1, 'content', 0, 0, 0, 'user*', '', -1),
+    ('mc_stats', 'mc_stat_summary', 'cforge_subtheme', 1, 0, 'footer', 0, 0, 0, '', '', 1),
+    ('cforge_custom', 'cforge_credit', 'cforge_subtheme', 1, 1, 'footer', 0, 0, 0, '', '', 4);"
+  );
+}
+  db_query("REPLACE INTO {blocks_roles} (`module`, `delta`, `rid`) VALUES
+    ('user', '0', 1),
+    ('menu', 'manage', 4),
+    ('menu', 'manage', 6),
+    ('block', '6', 6),
+    ('block', '7', 6),
+    ('mc_offer_want', 'cc_categories', 2),
+    ('menu', 'local-administration', 6),
+    ('menu', 'setup', 6),
+    ('mc_stats', 'mc_stat_summary', 2),
+    ('views', 'member_list-block_1', 1),
+    ('user', '1', 2),
+    ('views', 'pending_exchanges-block_1', 3),
+    ('views', 'pending_exchanges-block_2', 3),
+    ('views', 'pending_exchanges-block_3', 3)
+  ");
+}
+
+function rds_and_intersel_setup() {
+  $newUser = array(
+    'name' => 'routedessel',
+    'pass' => 'adminsel', // note: do not md5 the password
+    'mail' => 'rds@communityforge.net',
+    'status' => 1,
+    'init' => 'rds@communityforge.net',
+    'profile_firstname' => 'Route',
+    'profile_familyname' => 'des SEL',
+    'roles' => array(RID_TRADER => TRUE, RID_SYSTEM => TRUE),
+  );
+  user_save(NULL, $newUser);
+
+  $newUser = array(
+    'name' => 'intersel',
+    'pass' => 'adminsel', // note: do not md5 the password
+    'mail' => 'intersel@communityforge.net',
+    'status' => 1,
+    'init' => 'intersel@communityforge.net',
+    'profile_firstname' => 'Inter',
+    'profile_familyname' => 'SEL',
+    'roles' => array(RID_TRADER => TRUE, RID_SYSTEM => TRUE),
+  );
+  user_save(NULL, $newUser);
+}
+
+
+function cforge_custom_uninstall(){
+  variable_del('cforge_report');
+  $results = db_query("SELECT fid FROM {profile_fields} WHERE 
+    name in ('profile_responsibility', 'profile_firstname', 'profile_familyname', 'profile_address', 'profile_phone1', 'profile_phone2', 'profile_locality', 'profile_postal', profile_notes)");
+  while ($result = db_result($results)){
+    db_query('DELETE FROM {profile_fields} WHERE fid = %d', $result);
+    db_query('DELETE FROM {profile_values} WHERE fid = %d', $result); 
+  }
+
+  $result = db_query("SELECT nid from {node} WHERE title = 'Home' OR title = 'Accueil'
+    OR  title = 'Commit' OR title LIKE '%enrichi%'
+    OR title = 'Get Started' OR title = 'Echanger...'
+    OR title = 'Share' OR title = 'Partager...'
+    OR title = 'LETS' OR title = 'SEL'
+    OR title = 'FAQ'"
+  );
+  while ($nid = db_result($result)) {
+    node_delete($nid);
+  }
+  
+  node_type_delete('event');
+  db_query("DELETE FROM {menu_links} WHERE menu_name != 'navigation'");
+  db_query("DELETE FROM {menu_custom} WHERE menu_name = 'manage' OR menu_name = 'setup' OR menu_name = 'visitors'");
+  db_query("DELETE FROM {blocks} WHERE theme = 'sky_seldulac'");
+  db_query("DELETE FROM {role} WHERE rid > 2");
+  db_query("DELETE FROM {term_data} WHERE vid in (1,2,3,4)");
+  db_query("TRUNCATE TABLE {term_synonym}");
+  db_query("TRUNCATE TABLE {contact}");
+  db_query("DELETE FROM {vocabulary} WHERE module = 'cforge_custom'");
+  db_query("DELETE FROM {actions} WHERE callback = 'transaction_email_starter_action' OR callback  = 'transaction_email_completer_action'");
+
+  $results = db_query("SELECT nid FROM {node} WHERE uid = 1 AND type = 'page'");
+  while ($nid = db_result($results)) {
+    node_delete($nid);
+  }
+}
+
+
+function cforge_reset_views() {
+  views_invalidate_cache();
+  $viewnames = func_get_args();
+  foreach ($viewnames as $viewname) {
+    $view = views_ui_cache_load($viewname);
+    if ($view){
+      $view->delete();
+      views_object_cache_clear('view', $viewname);
+    }
+    else {
+      drupal_set_message("view $viewname not found");
+    }
+  }
+}
+
+
+/**
+ * this is the upgrade to correspond to mutual_credit v2
+ */
+ // These things should be moved into the actual install routine
+function cforge_custom_update_6020() {
+  global $language;
+  drupal_uninstall_module('disablepwstrength');
+  drupal_install_modules(array('demo'));
+  db_query('REPLACE INTO {vocabulary_node_types} (vid, type) VALUES (%d, "page")', DOCTYPE_VID);
+  db_query("UPDATE {node_type} set module = 'mc_offer_want' where module = 'cc_offer_want'");
+
+  variable_set('mc_stats_exclude', '1');
+  variable_set('mc_tabs_css', 'tab-wrapper');
+  variable_set('mc_live_stats', TRUE);
+  if ($language->language == 'fr') {
+    variable_set('mc_subtypes', array(INCOMING_SIGNED => 'Je lui demande', OUTGOING_SIGNED => 'Je lui donne'));
+  }
+  else {
+    variable_set('mc_subtypes', array(INCOMING_SIGNED => 'I am asking', OUTGOING_SIGNED => t('I am giving')));
+  }
+  //set the currency exchange types
+  $data = unserialize(db_result(db_query('SELECT data FROM {mc_currencies}')));
+  $data['subtype_bitmask'] = 12;
+  db_query("UPDATE {mc_currencies} SET data = '%s'", serialize($data));
+
+
+  //change the name of the offers wants module
+  db_query("UPDATE {system} SET name = 'mc_offer_want',  filename = REPLACE (filename, 'cc_offer_want', 'mc_offer_want') WHERE name = 'cc_offer_want'");
+  
+  $currency = array_pop(currencies_load());
+  db_query("UPDATE {menu_links} SET link_path = 'node/%d/edit', router_path = 'node/%/edit', link_title = '%s' WHERE link_path = 'admin/marketplace/currency'", $currency->nid, t('Mail notifications'));
+  db_query("UPDATE {menu_links} SET link_path = 'admin/mc/notification', router_path = 'admin/mc/notification' WHERE link_path = 'admin/settings/actions/configure/1'");
+  db_query("DELETE FROM {menu_links} WHERE link_path = 'admin/settings/actions/configure/2'");
+  db_query("DELETE FROM {menu_router} WHERE path LIKE '%marketplac%'");
+
+
+  cforge_reset_blocks();
+  cforge_reset_permissions();
+  _drupal_flush_css_js();
+  drupal_clear_css_cache();
+  drupal_clear_js_cache();
+  mc_cache_set_stats();
+  //rebuild views cache
+  cforge_reset_views('cc_exchange_list', 'cc_exchanges_pending');
+  return array();
+}
+/**
+ * install localization client
+ */
+function cforge_custom_update_6021() {
+  variable_set('l10n_client_server', "http://localize.drupal.org");
+  variable_set('l10n_client_use_server', '4');
+  variable_set('l10n_update_check_disabled', "0");
+  variable_set('l10n_update_check_frequency', "1");
+  variable_set('l10n_update_check_mode', "3");
+  variable_set('l10n_update_download_store', "sites/all/translations");
+  variable_set('l10n_update_import_mode', "0");
+  return array();
+}
+function cforge_custom_update_6022() {
+  if (!db_result(db_query("SELECT mlid from {menu_links} WHERE link_path = 'admin/mc/currencies' AND module = 'cforge_custom'"))) {
+    $cid = db_result(db_query("SELECT nid from {node} WHERE type = 'currency'"));
+    $new_item = array(
+      'link_path' => 'admin/mc/currencies',
+      'link_title' => t('Currencies'),
+      'module' => 'cforge_custom',
+      'menu_name' => 'setup',
+      'options' => array(
+        'attributes' => array(
+          'title' => t("Setup a default currency, exchange and directory settings.")
+          )
+        ),
+      'weight' => '-48',
+    );
+  }
+  menu_link_save($new_item);
+  drupal_clear_css_cache();
+  drupal_clear_css_cache();
+  cforge_reset_blocks();
+  db_query("DELETE FROM {vocabulary} WHERE module = 'mc_offer_want'");
+  db_query("UPDATE {vocabulary} SET module = 'mc_offer_want' WHERE module = 'cc_offer_want'");
+  db_query("DELETE FROM {system} WHERE filename LIKE '%/extensions/%'");
+}
+
+/*
+ * Mail update for French sites
+ */
+function cforge_custom_update_6023() {
+  global $language;
+  if ($language->language == 'fr') {
+    variable_set('mc_notification_subject', "Avis du site");
+    variable_set('mc_notification_body', "Bonjour,
+ 
+Un nouvel échange a été encodé :
+ 
+!summary");
+    variable_set('mc_signatures_notification_subject', "Demande de confirmation d'un échange");
+    variable_set('mc_signatures_notification_body', "!creator te demande de confirmer cet échange.
+ 
+Si tu constates une erreur dans cet échange, prends contact avec !creator pour trouver un accord.
+ 
+Nous espérons que cet échange a été une expérience positive. A bientôt pour le prochain !
+ 
+!sign_link");
+    variable_set('mc_notification_footer', "L'équipe de !site");
+  }
+  return array();
+}
+
+function cforge_custom_update_6024() {
+  global $language;
+  if ($language->language == 'fr') {
+    variable_set('mc_notification_subject', "Avis du !site");
+    variable_set('mc_notification_body', "Bonjour,
+ 
+Un nouvel échange a été encodé :
+!summary
+L'équipe du !site");
+
+    variable_set('mc_signatures_notification_subject', "Demande de confirmation d'un échange");
+    variable_set('mc_signatures_notification_body', "Bonjour,
+ 
+!creator te demande de confirmer cet échange :
+!summary
+Si tu es connecté au site : !sign_link
+ 
+Si tu constates une erreur dans cet échange, prends contact avec !creator pour trouver un accord.
+ 
+Nous espérons que cet échange a été une expérience positive. A bientôt pour le prochain !
+ 
+L'équipe du !site");
+
+    variable_set('mc_signatures_signoff_subject', "L'échange a été confirmé");
+    variable_set('mc_signatures_signoff_body', "Bonjour,
+ 
+L'échange suivant a été confirmé et ton solde a été mis à jour.
+!summary
+L'équipe du !site");
+  }
+  return array();
+}
+
+/*
+ * check data integrity after upgrade process
+ */
+function cforge_custom_update_6025() {
+  $result = db_query("SELECT n.nid FROM node n
+    LEFT JOIN mc_exchanges e on e.nid = n.nid
+    LEFT JOIN mc_unsigned u ON u.nid = n.nid
+    WHERE e.state = 0 and u.uid > 1");
+  while ($nid = db_result($result)) {
+    db_query("DELETE FROM {mc_unsigned} WHERE nid = $nid");
+  }
+  return array();
+}
+/*
+ * check data integrity after upgrade process
+ */
+function cforge_custom_update_6026() {
+  menu_rebuild();
+  drupal_clear_css_cache();
+  drupal_clear_js_cache();
+  return array();
+}
+/*
+ * restore the logo which was removed by the previous update
+ */
+function cforge_custom_update_6027() {
+  $var = variable_get('theme_sky_seldulac_settings', array());
+  //$var['logo_path'] = variable_get('file_directory_path', conf_path() . '/files') .'/'. 'sky_seldulac_logo.gif';
+  $var['sky_seldulac_layout'] = 'fluid_98';
+  variable_set('theme_sky_seldulac_settings', $var);
+  return array();
+}
+
+/*
+ * sort out one of the menun links
+ */
+function cforge_custom_update_6028() {
+  db_query("UPDATE {menu_links} set link_path = 'admin/mc/notification', router_path = 'admin/mc/notification' where link_path = 'admin/settings/mc/notification'");
+  menu_rebuild();
+  return array();
+}
+
+
+/*
+Drupal 7 adding vocab fields to content types
+    $instance = array(
+      'field_name' => 'synonyms_synonym',
+      'entity_type' => 'taxonomy_term',
+      'bundle' => $vocabulary->machine_name,
+      'label' => st('Synonyms'),
+    );
+    field_create_instance($instance);
+*/
