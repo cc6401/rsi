@@ -89,7 +89,7 @@
  *   $db_url = 'mysqli://username:password@localhost/databasename';
  *   $db_url = 'pgsql://username:password@localhost/databasename';
  */
-$db_url = 'mysqli://root:password@localhost/rsi';
+$db_url = 'mysqli://rsi:rsi123@localhost/rsi';
 $db_prefix = '';
 
 /**
