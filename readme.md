@@ -8,7 +8,10 @@
 3. Importar el último sql en la base de datos, usando
    `mysql -u rsi -p rsi < 20110*_rsi.sql`
 
-Para entrar como administrador:
-1. Acc No: `1`
-2. Password: `password`
+4. Crear un link simbólico desde /rsi/drupal-6.20 al directorio donde está la aplicación web, por ejemplo
+   `ln -s /rsi/drupal-6.20 /var/www/drupal-6.20`
+
+4. Para entrar como administrador:
+  1. Acc No: `1`
+  2. Password: `password`
 
