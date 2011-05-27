@@ -1,0 +1,183 @@
+<?php
+// $Id: role_expire.install,v 1.9 2010/03/07 18:50:38 stewsnooze Exp $
+
+/**
+ * @file
+ * Role expire install.
+ */
+
+
+/**
+ * Implementation of hook_schema().
+ */
+function role_expire_schema() {
+  $schema['role_expire'] = array(
+    'description' => t('Expiration time for the user roles.'),
+    'fields' => array(
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => t('User ID connected with expiration time.')
+      ),
+      'rid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'The role ID assigned to the user.',
+      ),
+      'expiry_timestamp' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => t('Role expiration timestamp.'),
+      )
+    ),
+    'primary key' => array('uid', 'rid'),
+  );
+  $schema['role_expire_length'] = array(
+    'description' => t('Length in days to assign each role by default.'),
+    'fields' => array(
+      'rid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => t('The role_id.')
+      ),
+      'duration' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => t('The default duration for the role.')
+      ),
+    ),
+    'primary key' => array('rid'),
+  );
+  return $schema;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function role_expire_install() {
+  drupal_install_schema('role_expire');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function role_expire_uninstall() {
+  drupal_uninstall_schema('role_expire');
+}
+
+function role_expire_update_6100() {
+  $roles = user_roles(true);
+  unset($roles[DRUPAL_AUTHENTICATED_RID]);
+
+  $schema = array();
+  $ret = array();
+  foreach ($roles as $rid => $role) {
+    $schema['role_expire_'. $rid] = array(
+      'description' => t('Expiry information for '. $role),
+      'fields' => array(
+        'uid' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'description' => t('User ID connected with expiry date.')
+        ),
+        'expiry_timestamp' => array(
+          'description' => t('Role expiry timestamp.'),
+          'type' => 'varchar',
+          'not null' => TRUE,
+          'length' => 255)
+        ),
+      'indexes' => array(
+        'uid' => array('uid'),
+        )
+      );
+
+    if (db_table_exists("role_expire_". $role)) {
+      db_rename_table($ret, "role_expire_". $role, "role_expire_". $rid);
+    }
+    else {
+      db_create_table($ret, "role_expire_". $rid, $schema["role_expire_". $rid]);
+    }
+  }
+
+  return $ret;
+}
+
+function role_expire_update_6120() {
+  // Install new schema
+  drupal_install_schema('role_expire');
+
+  // Get all data from old databases and input insert new table
+  $ret = array();
+  $roles = user_roles(true);
+  unset($roles[DRUPAL_AUTHENTICATED_RID]);
+
+  foreach ($roles as $rid => $role) {
+    $result = db_query("SELECT * FROM {role_expire_" . $rid . "}");
+    while ($row = db_fetch_object($result)) {
+        $ret[] = update_sql("INSERT INTO {role_expire} VALUES ({$row->uid}, {$rid}, {$row->expiry_timestamp})");
+    }
+    db_drop_table($ret, "role_expire_" . $rid);
+  }
+
+  return $ret;
+}
+
+function role_expire_update_6121() {
+  $ret = array();
+  $role_expire_length_schema = array(
+    'description' => t('Length in days to assign each role by default.'),
+    'fields' => array(
+      'rid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => t('The role_id.')
+      ),
+      'duration' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => t('The default duration for the role.')
+      ),
+    ),
+    'indexes' => array(
+    'rid' => array('rid'),
+    ),
+  );
+
+  db_create_table($ret, 'role_expire_length', $role_expire_length_schema);
+
+  return $ret;
+}
+
+/**
+ * Set up primary keys on the tables
+ */
+function role_expire_update_6122() {
+  $ret = array();
+  db_drop_index($ret, 'role_expire', 'uid');
+  db_add_primary_key($ret, 'role_expire', array('uid', 'rid'));
+  db_drop_index($ret, 'role_expire_length', 'rid');
+  db_add_primary_key($ret, 'role_expire_length', array('rid'));
+  return $ret;
+}
+
+/**
+ * Remove rogue roles from role_expire.
+ */
+function role_expire_update_6123() {
+  $ret = array();
+  $result = db_query("SELECT role_expire.rid, role_expire.uid FROM role_expire LEFT JOIN users_roles ON role_expire.rid=users_roles.rid AND role_expire.uid=users_roles.uid WHERE users_roles.uid IS NULL");
+  while ($row = db_fetch_object($result)) {
+      $ret[] = update_sql("DELETE FROM {role_expire} WHERE rid = {$row->rid} AND uid = {$row->uid}");
+  }
+  return $ret;
+}

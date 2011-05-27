@@ -1,0 +1,14 @@
+name = Community Tasks
+description = Users sign up to volunteer task requests and are credited when they are completed
+package = Complementary Currencies
+core = "6.x"
+
+files[] = community_tasks.module
+files[] = community_tasks.install
+files[] = community_tasks.views.inc
+; Information added by drupal.org packaging script on 2011-02-28
+version = "6.x-1.0"
+core = "6.x"
+project = "community_tasks"
+datestamp = "1298903167"
+

@@ -1,0 +1,18 @@
+name = Contact
+description = Enables the use of both personal and site-wide contact forms.
+package = Core - alternate
+core = 6.x
+php = 5
+files[] = contact.module
+files[] = contact.admin.inc
+files[] = contact.pages.inc
+files[] = contact.install
+files[] = contact.test
+configure = admin/build/contact
+
+; Information added by drupal.org packaging script on 2011-04-10
+version = "6.x-2.x-dev"
+core = "6.x"
+project = "contact"
+datestamp = "1302393938"
+

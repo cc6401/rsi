@@ -1,0 +1,10 @@
+name = Uid Login
+description = Overrides login functions so that users login with their uid, and usernames need not be unique.
+version = $Name: DRUPAL-6--1-0 $
+core = 6.x
+; Information added by drupal.org packaging script on 2009-05-15
+version = "6.x-1.0"
+core = "6.x"
+project = "uid_login"
+datestamp = "1242383771"
+

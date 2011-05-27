@@ -1,0 +1,70 @@
+<?php
+
+/*This module modifies the user login process so that
+ * the login name expects and validates the unique ID of each user, not the name
+ * The username validation doesn't check for uniqueness
+ * The database username field is not UNIQUE
+ * 
+ * TODO:installation: Go to the database and remove the unique key from the users.name table
+*/
+
+
+function uid_login_form_alter(&$form, $form_state, $form_id){
+  switch ($form_id) {
+    case 'user_login':
+    case 'user_login_block':
+      $form['#validate'][1] = 'uid_login_validate';
+      array_shift($form['#validate']);
+      $form['name']['#title'] = t('Acc No');
+      break;
+    case 'user_profile_form':
+      $form['#validate'][0] = 'uid_login_user_profile_form_validate';
+  }
+}
+
+//alternative login function to check against uid instead of username
+function uid_login_validate($form, $form_state) {
+  global $user;
+  $values=$form_state['values'];
+  if (!empty($values['name']) && !empty($values['pass']) && $account = user_load(array('uid' => $values['name'], 'pass' => trim($values['pass']), 'status' => 1))) {
+    $user = $account;
+    user_authenticate_finalize($values);
+    return $user;
+  } else {
+    user_login_final_validate($form, $form_state);
+  }
+}
+
+//this module means that usernames don't have to be unique. 
+//this function therefore removes the unique username checking on the user edit form
+//this is copied from _user_edit_validate
+function uid_login_user_profile_form_validate($form, &$form_state) {
+  //this function is called for the account tab and the profile tabs, but needed only on the account tab
+  if (!array_key_exists('name',$form_state['values'])) return;
+  $edit = $form_state['values'];
+  $account = $form_state['values']['_account'];
+  $uid = $account->uid;
+  // Validate the username when: new user account; or user is editing own account and can change username; or an admin user.
+  if (!$uid || ($GLOBALS['user']->uid == $uid && user_access('change own username')) || user_access('administer users')) {
+    if ($error = user_validate_name($edit['name'])) {
+      form_set_error('name', $error);
+    }
+    //else if (db_result(db_query("SELECT COUNT(*) FROM {users} WHERE uid != %d AND LOWER(name) = LOWER('%s')", $uid, $edit['name'])) > 0) {
+    //  form_set_error('name', t('The name %name is already taken.', array('%name' => $edit['name'])));
+    //}
+    else if (drupal_is_denied('user', $edit['name'])) {
+      form_set_error('name', t('The name %name has been denied access.', array('%name' => $edit['name'])));
+    }
+  }
+
+  // Validate the e-mail address:
+  if ($error = user_validate_mail($edit['mail'])) {
+    form_set_error('mail', $error);
+  }
+  else if (db_result(db_query("SELECT COUNT(*) FROM {users} WHERE uid != %d AND LOWER(mail) = LOWER('%s')", $uid, $edit['mail'])) > 0) {
+    form_set_error('mail', t('The e-mail address %email is already registered. <a href="@password">Have you forgotten your password?</a>', array('%email' => $edit['mail'], '@password' => url('user/password'))));
+  }
+  else if (drupal_is_denied('mail', $edit['mail'])) {
+    form_set_error('mail', t('The e-mail address %email has been denied access.', array('%email' => $edit['mail'])));
+  }
+}

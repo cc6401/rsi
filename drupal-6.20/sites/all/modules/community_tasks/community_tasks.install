@@ -1,0 +1,43 @@
+<?php
+
+/**
+ * Implementation of hook_install().
+ */
+function community_tasks_install() {
+  //this does not seek out and incorporate existing nodes of type 'requack'
+  drupal_install_schema('community_tasks');
+}
+
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function community_tasks_uninstall () {
+  //this does not delete any nodes of type 'requack'
+  drupal_uninstall_schema('community_tasks');
+}
+
+/**
+ * Implementation of hook_schema)().
+ * http://api.drupal.org/api/function/hook_schema/6
+ */
+function community_tasks_schema () {
+  //the sole purpose of this table is to expose the counter to views.
+  //Otherwise we would use a data field in $account
+  $schema['community_task_count'] = array (
+  'description'=>"User's totals of community tasks accomplished",
+    'fields'=> array(
+      'uid'=> array (
+        'description' => t('the user ID'),
+        'type' => 'int',
+        'size' => 'normal',
+      ),
+      'tasks'=> array(
+        'description' => t('Number of community tasks completed'),
+        'type' => 'int',
+        'size' => 'normal',
+      ),
+    )
+  );
+  return $schema;
+}

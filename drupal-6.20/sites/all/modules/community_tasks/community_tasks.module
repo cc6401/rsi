@@ -1,0 +1,251 @@
+<?php
+
+/*
+ * Allows permitted users to create tasks, and other users to commit to them, and be credited when the tasks are completed
+ * Uncompleted tasks nodes are owned by user 1, committed tasks are owned by whoever committed to them
+ * Completed tasks have the node flag 'promote
+ */
+
+/** 
+ * http://api.drupal.org/api/function/hook_help/6
+ */
+function community_tasks_help($section) {
+  switch ($section) {
+    case 'admin/help#community_task':
+      return t('A contentType which tracks tasks needing doing, who committed to them, and who completed them.');
+  }
+}
+
+/** 
+ * http://api.drupal.org/api/function/hook_node_info/6
+ * This hook is required for modules to define one or more node types.
+ */
+function community_tasks_node_info() {
+  $types['community_task'] = array(
+    'name' => t('Community tasks'),
+    'module' => 'community_tasks',
+    'description' => t('A way to post tasks the community needs volunteers for, for members to volunteer for those tasks, and to be credited when the tasks are done.') .
+      t('Tasks have three states - open, committed, and completed.'),
+    'has_title' => TRUE,
+    'title_label' => t('A need to be met by a user'),
+    'status' => TRUE,
+    'promote' => FALSE,
+  );
+  return $types;
+}
+
+function community_tasks_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'community_tasks'),
+  );
+}
+
+/** 
+ * http://api.drupal.org/api/function/hook_perm/6
+ * This hook can supply permissions that the module defines,
+ */
+function community_tasks_perm() {
+  return array('view tasks', 'edit tasks', 'commit to tasks');
+}
+
+/** 
+ * http://api.drupal.org/api/function/hook_access/6
+ * this function is called by node_access, and others in this module
+ */
+function community_tasks_access($op, $node, $account){
+  switch($op) {
+    case 'update':
+    case 'create':
+      return user_access('edit tasks');
+    case 'view':
+      return user_access('view tasks');
+  }
+}
+
+
+/*
+ * Implementation of hook_form
+ * This is used to create and edit each task node
+ */
+function community_tasks_form($node) {
+  
+  if ($node->title) {
+     drupal_set_title(t('Edit commitment'));
+  } else {
+     drupal_set_title(t('Create task'));
+     $node->promote = 0;
+     $node->uid = 1;
+  }
+  //this type consists only of the title and the user who completed it.
+  $form['title']=array(
+    '#type'=>'textfield',
+    '#title'=>check_plain($type->title_label),
+    '#required'=>TRUE,
+    '#default_value'=>$node->title,
+    '#weight' => -1,
+  );
+  $type = node_get_types('type', 'community_task');
+  if ($type->has_body) {
+    $form['body'] = array(
+      '#type' => 'textarea',
+      '#title' => check_plain($type->body_label),
+      '#required' => FALSE,
+      '#default_value' => $node->body,
+      '#weight' => 0,
+    );
+  }
+  
+  $completer  = user_load($node->uid);
+  $admin = user_load(1);
+  $form['name'] = Array ( //we know this field is processed by the node handler
+    '#type' => 'textfield',
+    '#title' => t('Who has committed to this task?'),
+    '#autocomplete_path' => 'user/autocomplete',
+    '#default_value' => $completer->name,
+    '#weight' => 1,
+    '#description' => t('Uncommitted tasks are owned by user 1'),
+  );
+  return $form;
+}
+
+/** 
+ * Implementation of hook_form_alter)().
+ * http://api.drupal.org/api/function/hook_form_alter/6
+ */
+function community_tasks_form_alter(&$form, $form_state, $form_id){
+  if ($form_id=='community_task_node_form'){
+    $form['menu']['#access'] = FALSE;
+    $form['path']['#access'] = FALSE;
+    $form['comment_settings']['#access'] = FALSE;
+    $form['revision_information']['#access'] = FALSE;
+    $form['promote'] = $form['options']['promote'];
+    $form['promote']['#title'] = t('Is this completed?');
+    unset($form['author']);
+    unset($form['options']);
+    unset($form['buttons']['preview']);
+  }
+}
+
+/**
+ * Implementation of hook_view)().
+ * http://api.drupal.org/api/function/hook_insert/6
+ */
+function community_tasks_view($node) {  drupal_add_css(drupal_get_path('module','community_tasks') . '/theme/community_task.css');
+  $node->content['body']['#value'] = $node->body;
+  //add the button for anyone but admin to commit themselves
+  if ($node->uid == 1 && $GLOBALS['user']->uid !=1 ) {
+    $node->content['body']['#value'] .= drupal_get_form('commit_button_form', $node->nid);
+  }
+  return $node;
+}
+
+/** 
+ * Implementation of hook_nodeapi)().
+ * http://api.drupal.org/api/function/hook_nodapi/6
+ */
+function community_tasks_nodeapi($op, $node) {
+  switch ($op) {
+    case 'update':
+      if ($node->uid == 0) $node->uid = 1;
+      db_query('UPDATE node SET uid = %d WHERE nid = %d',
+        array(':uid' => $node->uid, ':nid' => $node->nid)
+      );
+    case 'insert':
+    case 'delete':
+      community_tasks_recount($node->uid);
+      //goes to the main view
+      drupal_goto('tasks');
+  }
+}
+
+/** 
+ * Implementation of hook_theme)().
+ * http://api.drupal.org/api/function/hook_theme/6
+ */
+function community_tasks_theme() {
+  return array (
+    'acknowledgements' => array(
+      'function' => 'theme_acknowledgements',
+      'arguments' => array('quantity' => NULL),
+    ),
+  );
+}
+
+/**
+* Implementation of hook_registry_alter
+*/
+function community_tasks_theme_registry_alter(&$theme_registry) {
+  //include this modules tpl.php files in the theme registry for 'node'
+  $idx = array_search('modules/node', $theme_registry['node']['theme paths']);
+  if ($idx !== False) {
+    array_splice(
+      $theme_registry['node']['theme paths'],
+      $idx+1,
+      0,
+      drupal_get_path('module', 'community_tasks') . '/theme'
+    );
+  }
+}
+
+function community_tasks_recount($uid) {
+  $count = db_result(db_query("SELECT count(uid) from {node} WHERE uid = %d AND type = 'community_task'", 
+    array(':uid'=>$uid)
+  ));
+  
+  db_query("UPDATE {community_task_count} SET tasks = %d WHERE uid = %d", 
+    array(':count'=>$count, ':uid'=>$uid)
+  );
+  if (!db_affected_rows()) {
+    @db_query("INSERT INTO {community_task_count} (uid, tasks) VALUES ('%d', %d)",
+      array(':uid'=>$uid, ':count'=>$count)
+    );
+  }
+}
+
+function community_tasks_user ($op, &$edit, &$account, $category = NULL) {
+  switch ($op) {
+    case 'view':
+      $acknowledgements = intval(db_result(db_query('SELECT tasks FROM {community_task_count} WHERE uid = %d',
+        array(':account'=>$account->uid)
+      )));
+      $account->content['acknowledgements'] = array (
+        '#type' => user_profile_item,
+        '#title' => 'Acknowledgements', //this is a temporary plural hack, and will be themed out anyway
+        '#value' => theme('acknowledgements', $acknowledgements),
+        '#weight' => 1,
+      );
+  }
+}
+
+function user_acknowledgements($uid) {
+  $user = user_load($uid);
+  $names = variable_get('community_tasks_terminology', array());
+  drupal_set_title(t("@user's acknowledgements", array('@user' => $user->name)));
+  $view = views_get_view('tasks_completed_by_user');
+  return $view->execute_display('default', array($uid));
+}
+
+function theme_acknowledgements($quantity) {
+  $string  = format_plural($quantity, '1 task completed', '@count tasks completed');
+  return '<div class="acknowledgements">' . $string  . '</div>';
+}
+
+function commit_button_form($form_state, $nid) {
+  $form['nid'] = array (
+    '#type' => 'hidden',
+    '#default_value' => $nid,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Commit to this task'),
+  );
+  $form['#redirect'] = 'user/'. $GLOBALS['user']->uid . '/community_tasks';
+  return $form;
+}
+
+function commit_button_form_submit($form, $form_state) {
+  db_query("UPDATE {node} SET uid = %d WHERE nid = %d",  
+    array(':uid' => $GLOBALS['user']->uid, ':nid' => $form_state['values']['nid'])
+  );
+}

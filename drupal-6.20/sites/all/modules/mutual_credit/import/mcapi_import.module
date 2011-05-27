@@ -1,0 +1,358 @@
+<?php
+
+function mcapi_import_help($path) {
+  switch ($path) {
+    case 'admin/help#mcapi_import':
+      return t('Provides advice and a simple text box to paste csv style data from your existing spreadsheets. ') .
+      t('Assumes user 1 is the balancing account.');
+  }
+}
+
+/**
+ * Implementation of hook_menu)().
+ * http://api.drupal.org/api/function/hook_menu/6
+ */
+function mcapi_import_menu() {
+  $items['admin/mc/import'] = array (
+    'title' => 'Import Tools',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('import_balances_form'),
+    'access arguments' => array('configure economy'),
+    'weight' => 5
+  );
+  $items['admin/mc/import/balances'] = array(
+    'title' => 'Import Balances',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -10
+  );
+  $items['admin/mc/import/launch'] = array(
+    'title' => 'LAUNCH MAIL',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('launch_form'),
+    'access arguments' => array('configure economy'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -50
+  );
+  return $items;
+print_r($items);
+}
+
+function mcapi_import_menu_alter($items) {
+  //override the password reset login function so it doesn't expire after 24 hours
+  $items['user/reset/%/%/%']['page arguments'][0] = 'mutual_credit_user_pass_reset';
+}
+
+function import_balances_form(&$form_state) {
+  //check that no exchanges have already taken place
+  if (db_result(db_query("SELECT * FROM {mc_exchanges} WHERE state != %d", EXCHANGE_STATE_ERASED))) {
+    return array('#prefix' => 'You can only import "carried forward" balances before any exchanges have been entered on the system.');
+  }
+
+  $form['#prefix'] = '<p>' . t("This page allows you to import users' balances and gross incomes for users already on the system. To import users, see the !import_user module.",
+    array(
+      '!import_user'=>l('import_user', 'http://drupal.org/project/import_user')
+    )
+  )  . '</p>';
+  $form['#prefix'] .= "\n<p>".t("Paste paste 2 or 3 comma separated columns into the field below, the first column should be the uid or username, the second column the current balance, and optionally the third column should be the user's gross income until now (turnover).");
+  $form['#prefix'] .= "\n<p>".t("This tools assumes there is only one currency in the system. The second column SHOULD add up to 0 for LETS and other zero balance systems, but this will not be checked." ) . '</p>';
+  $form['#prefix'] .= "\n<p>".t("The first line of the field should read (third column is optional): !code", array('!code' => '<blockquote>"UserID","Balance","GrossIncome"</blockquote>"')) . '</p>';
+  
+  $form['data'] = array (
+    '#type' => 'textarea',
+    '#title' => 'paste data',
+    '#default_value' => $form_state['values']['data'],
+    '#required' => TRUE  
+  );
+  $form['import_balances'] = array (
+    '#type' => 'submit',
+    '#value' => 'import',
+  );
+  $form['#redirect'] = 'user/1';
+  return $form;
+}
+
+function import_balances_form_validate($form, &$form_state) {
+  $form_state['values']['data'] .= "\n";
+  $rows = str_getcsv($form_state['values']['data']);
+  check_users($rows);
+
+  foreach ($rows as $rownum => $row) {
+    //check integrity of balances, the second field
+    if (!intval($row['Balance']) && $row['Balance'] != 0) {
+      form_set_error('data', t("balance (second item) on row @num is not an integer", array('@num'=>$key+1)));
+    }
+  
+    //check integrity of gross income, the optional third field
+    if (isset($row['GrossIncome'])){
+      if (!intval($row['GrossIncome'])) {
+        form_set_error('data', t("gross income (third item) on row @rownum must be a positive integer", array('@rownum'=>$rownum+1)));
+      } elseif ($row['GrossIncome'] < 0) {
+        form_set_error('data', t("gross income (third item) on row @rownum cannot be less than 0", array('@rownum'=>$rownum+1)));
+      }
+    }
+  }
+}
+
+function import_balances_form_submit($form, &$form_state) {
+  $rows = str_getcsv($form_state['values']['data']);
+  foreach ($rows as $key=>$stats) {
+    mcapi_import_balances_member($stats['UserID'], $stats['Balance'], $stats['GrossIncome']);
+  }
+}
+
+
+function mcapi_import_balances_member($uid, $balance, $gross_income=NULL) {
+  $account = user_load($uid);
+  $bal_acc = 1;
+  $options = array(
+    'exchange_type' => 'mcapi_import',
+  );
+  if ($gross_income) {
+    $options['title'] = t("Gross income");
+    mcapi_add_node($bal_acc, $uid, $gross_income, $options);
+    $options['title'] = t("Gross expenditure");
+    mcapi_add_node($uid, $bal_acc, $gross_income-$balance, $options);
+  }
+  else {//if there is only balance, we do one exchange, which is simply + balance
+    $options['title'] = t("Carried Forward");
+    if (intval($balance) > 0) {
+      $tokens = array('@user' => $account->name, '@balance' => $balance);
+      $result = mcapi_add_node($bal_acc, $uid, $balance, $options);
+      $message = t("Initial payment to @user of @balance", $tokens);
+    } elseif (intval($balance) < 0) {
+      $result = mcapi_add_node($uid, $bal_acc, -$balance, $options);
+      $message = t("Initial payment from @user of @balance", $tokens);
+    }
+  }
+  module_load_include('inc', 'mcapi');
+  $cid = db_result(db_query("SELECT nid from {node} WHERE type = 'currency'"));
+  _refresh_mc_cache($account->uid, $cid);
+  if ($result->success) drupal_set_message($message);
+}
+
+
+//check that the user ids or names actually correspond to a user on the system
+//coming from the csv all keys and values will be strings, surrounded by quotes
+function check_users($rows) {
+  foreach ($rows as $rownum => $row){
+    $id = $row['UserID'];
+    if (is_numeric($id)){
+      $member = user_load($id);
+    } else {
+      $member = user_load($id);
+    }
+    if (!$member->name) {
+      form_set_error('data', t("'UserID' on row @rownum is not a user:@data", array('@rownum'=>$rownum+1, '@data'=>$id)));
+    }
+  }
+}
+
+if (!function_exists('str_getcsv')) { 
+function str_getcsv($input, $delimiter = ",", $enclosure = '"', $escape = "\\") {
+  $rows = explode("\n", $input);
+  $headers = explode($delimiter, array_shift($rows));
+  $all = array();
+  while ($row = array_shift($rows)){
+    $entry=array();
+    $values = explode($delimiter, $row);
+    $i=0;
+    foreach($values as $v){
+      if ($i < count($headers)) $entry[trim($headers[$i], "\"\r")] = trim($v, "\"\r");
+      $i++;
+    }
+    $data[] = $entry;
+  }
+  return $data;
+}}
+
+/*
+ * Fields for user_import module NEARLY WORKS!!
+*/
+function mcapi_import_user_import_form_field_match() {
+  $options = array();
+  $options['mutual_credit']['cleared_balance'] = t('Balance');
+  $options['mutual_credit']['gross_income'] = t('Gross Income');
+  return $options;
+}
+
+function mcapi_import_user_import_data($settings, $update_setting, $column_settings, $type, $field_id, $data, $column_id) {
+  $field_match = $type .'-'. $field_id;
+  foreach ($settings['field_match'] as $key => $val) {
+    if ($val['field_match'] == $field_match) {
+      return $data[$key];
+    }
+  }
+}
+function mcapi_import_user_import_after_save($settings, $account, $password, $fields, $updated, $update_setting_per_module) {
+  if ($fields['mutual_credit']['cleared_balance'][0]) {
+    mcapi_import_balances_member($account->uid, $fields['mutual_credit']['cleared_balance'][0], $fields['mutual_credit']['gross_income'][0]);
+  }
+  elseif ($fields['uid_login']['uid_login']) {
+    db_query("UPDATE {mc_cache} SET uid = %d WHERE uid = %d",
+      array(
+        ':uid_new' => $fields['uid_login']['uid_login'][0],
+        ':uid_old' => $account->uid
+      )
+    );
+  }
+}
+
+//provide a checklist and lauch button
+function launch_form($form_state) {
+  $form['#prefix'] = t('This is where you launch the site by mailing all the members a new password.');
+  $form['checklist'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Checklist'),
+    '#description' => t('All these boxes need to be checked before launching the site')
+  );
+  $form['checklist']['written'] = array(
+    '#title' => t('Launch mail composed'),
+    '#type' => 'checkbox',
+    '#weight' => 1,
+    '#description' => t("Have you composed the 'password_reset' email at !page", array('!page' => l('admin/user/settings', 'admin/user/settings'))),
+  );
+
+  $traders = cache_get('cc_trader_list');
+  $form['checklist']['membercount'] = array(
+    '#title' => t('Trading accounts ready: @num', array('@num' => count($traders->data))),
+    '#type' => 'checkbox',
+    '#weight' => 2,
+    '#description' => t('Are all the members imported and do they have permission to trade?'),
+  );
+  if (count($traders->data) > 150) {
+    $form['checklist']['queue'] = array(
+      '#title' => t('Queue module installed'),
+      '#type' => 'checkbox',
+      '#weight' => 3,
+      '#description' => t('If you are mailing many users, you may want to queue them using a module like !module', array('!module', l('Job Queue', 'http://drupal.org/project/job_queue'))),
+    );
+  }
+  $form['checklist']['content'] = array(
+    '#title' => t('First content prepared'),
+    '#type' => 'checkbox',
+    '#weight' => 4,
+    '#description' => t('What is the first thing your users will see when they log in for the first time? Is it specially prepared?'),
+  );
+  $form['checklist']['testmail'] = array(
+    '#title' => t('Testmail is sent'),
+    '#type' => 'checkbox',
+    '#weight' => 6,
+    '#description' => t('Have you sent the testmail and imagined yourself a new user who has never seen they system before?'),
+  );
+  $form['testmail'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Test mail'),
+    '#description' => t('Send a test mail (not to yourself)'),
+  );
+  $form['testmail']['uid'] = array(
+    '#type' => 'textfield',
+    '#title' => 'account to send test to',
+    '#description' => t("Enter an account number, but not the one you're using now (@uid)", array('@uid' => $GLOBALS['user']->uid)) .' '.
+      t("An email with login instructions will be sent to that account's address"),
+    '#submit' => array('mcapi_import_test_launch'),
+    '#element_validate' => array('not_own_account_id')
+  );
+  $form['testmail']['sendtest'] = array(
+    '#type' => 'submit',
+    '#weight' => 5,
+    '#value' => t('Send test mail'),
+    '#submit' => array('mcapi_import_test_launch')
+  );
+  $form['launch'] = array(
+    '#type' => 'submit',
+    '#value' => t('LAUNCH!'),
+  );
+ return $form;
+}
+function not_own_account_id(&$element, $form_state) {
+  if ($element['#value'] == $GLOBALS['user']->uid) {
+    form_error($element, t("You can't send a test mail to the account you are logging in with"));
+  }
+}
+
+function launch_form_validate($form, $form_state) {
+  if ($form_state['values']['op'] != t('LAUNCH!')) return; 
+  foreach ($form['checklist'] as $element){
+    if (is_array($element) && isset($element['#type']) && $element['#type'] == 'checkbox') {
+      if (!$form_state['values'][$element['#name']]) {
+        form_set_error($element['#name'], t('All boxes must be ticked to launch'));
+      }
+    }
+  }
+}
+function mcapi_import_test_launch($form, $form_state) {
+  $account = user_load($form_state['values']['uid']);
+  change_and_mail($account);
+  drupal_set_message(t('Instructions have been sent to @mail', array('@mail' => $account->mail)));
+}
+
+function launch_form_submit($form, $form_state) {
+  $traders = cache_get('cc_trader_list');
+  foreach(array_keys($traders->data) as $uid){
+    change_and_mail(user_load($uid));
+  }
+  drupal_set_message('Your users have now been notified');
+  drupal_uninstall_modules('mcapi_import');
+}
+
+function change_and_mail($account) {
+  _user_mail_notify('password_reset', $account);
+}
+
+/**
+ * Menu callback; process one time login link and redirects to the user page on success.
+ * this is identical to user_pass_reset, except it doesn't check for expiry
+ */
+function mutual_credit_user_pass_reset(&$form_state, $uid, $timestamp, $hashed_pass, $action = NULL) {
+  global $user;
+
+  // Check if the user is already logged in. The back button is often the culprit here.
+  if ($user->uid) {
+    drupal_set_message(t('You have already used this one-time login link. It is not necessary to use this link to login anymore. You are already logged in.'));
+    drupal_goto();
+  }
+  else {
+    // Time out, in seconds, until login URL expires. 24 hours = 86400 seconds.
+    $timeout = 86400;
+    $current = time();
+    // Some redundant checks for extra security ?
+    if ($timestamp < $current && $account = user_load(array('uid' => $uid, 'status' => 1)) ) {
+      // Deny one-time login to blocked accounts.
+      if (drupal_is_denied('user', $account->name) || drupal_is_denied('mail', $account->mail)) {
+        drupal_set_message(t('You have tried to use a one-time login for an account which has been blocked.'), 'error');
+        drupal_goto();
+      }
+
+      if ($account->uid && $hashed_pass == user_pass_rehash($account->pass, $timestamp, $account->login)) {
+        // First stage is a confirmation form, then login
+        if ($action == 'login') {
+          watchdog('user', 'User %name used one-time login link at time %timestamp.', array('%name' => $account->name, '%timestamp' => $timestamp));
+          // Set the new user.
+          $user = $account;
+          // user_authenticate_finalize() also updates the login timestamp of the
+          // user, which invalidates further use of the one-time login link.
+          user_authenticate_finalize($form_state['values']);
+          drupal_set_message(t('You have just used your one-time login link. It is no longer necessary to use this link to login. Please change your password.'));
+          drupal_goto('user/'. $user->uid .'/edit');
+        }
+        else {
+          $form['message'] = array('#value' => t('<p>This is a one-time login for %user_name and will expire on %expiration_date.</p><p>Click on this button to login to the site and change your password.</p>', array('%user_name' => $account->name, '%expiration_date' => format_date($timestamp + $timeout))));
+          $form['help'] = array('#value' => '<p>'. t('This login can be used only once.') .'</p>');
+          $form['submit'] = array('#type' => 'submit', '#value' => t('Log in'));
+          $form['#action'] = url("user/reset/$uid/$timestamp/$hashed_pass/login");
+          return $form;
+        }
+      }
+      else {
+        drupal_set_message(t('You have tried to use a one-time login link which has either been used or is no longer valid. Please request a new one using the form below.'));
+        drupal_goto('user/password');
+      }
+    }
+    else {
+      // Deny access, no more clues.
+      // Everything will be in the watchdog's URL for the administrator to check.
+      drupal_access_denied();
+    }
+  }
+}
+

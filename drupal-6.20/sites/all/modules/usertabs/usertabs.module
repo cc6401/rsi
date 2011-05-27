@@ -1,0 +1,66 @@
+<?php
+
+
+/**
+ * @file
+ * usertabs.module
+ *
+ * This module puts the tab for  the edition of the user account under the view tab
+ *
+ * © Copyright 2009 Robert Garrigos.
+ * \author Robert Garrigos http://garrigos.cat
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function usertabs_help($page, $arg) {
+  switch ($page) {
+    case 'admin/help#usertabs':
+      return '<p>'. t('User Tabs places the usual edit account tab, which is displayed as a primary tab menu item by default, as a subtab of the view account tab. You should only activate this module if you have more than one primary tab menu items as when you active the contact module, otherwise you may end up with two secondary tabs with no primary tab. This is due to the way the drupal menu system works.') .'</p>';
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function usertabs_menu() {
+  $items['user/%user_category/edit/view'] = array(
+    'title' => 'View',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+    'load arguments' => array('%map', '%index'),
+  );
+  //this will replace 'user/%user_category/edit'
+  $items['user/%user/edit'] = array(
+    'title' => 'Account',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'page callback' => 'usertabs_goto',
+    'page arguments' => array(1),
+    'access callback' => 'user_view_access',
+    'access arguments' => array(1),
+    'weight' => -10,
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_menu_alter().
+ */
+function usertabs_menu_alter(&$callbacks) {
+  unset($callbacks['user/%user/view']);
+  //move the original edit callback down a level
+  $callbacks['user/%user_category/edit/account'] = $callbacks['user/%user_category/edit'];
+  unset($callbacks['user/%user_category/edit']);
+}
+
+
+//diverts all links to user/%/edit to new callback
+function usertabs_goto($user) {
+  $dest = drupal_get_destination();
+  // we need to unset this otherwise drupal_goto gets into a loop and goes straight to the destination url
+  unset($_REQUEST['destination']);
+  unset($_REQUEST['edit']['destination']);
+  drupal_goto("user/$user->uid/edit/account", $dest);
+}
+

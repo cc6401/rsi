@@ -1,0 +1,10 @@
+; $Id: role_expire.info,v 1.1 2009/02/13 19:24:06 bdziewierz Exp $ 
+name = Role Expire
+description = "Enables user roles to expire on given time and day."
+core = 6.x
+; Information added by drupal.org packaging script on 2010-04-25
+version = "6.x-1.9"
+core = "6.x"
+project = "role_expire"
+datestamp = "1272217809"
+

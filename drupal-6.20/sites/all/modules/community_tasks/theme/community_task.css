@@ -1,0 +1,15 @@
+.completed{
+  background:#ffffff url('completed.png') no-repeat right;
+  padding-right: 80px;
+}
+
+.open{
+  background:#ffffff url('open.png') no-repeat right;
+  padding-right: 80px;
+
+}
+
+.committed{
+  background:#ffffff url('committed.png') no-repeat right;
+  padding-right: 80px;
+}

@@ -1,0 +1,298 @@
+<?php
+// $Id: autocategorise.module,v 1.13 2009/07/29 19:48:46 matslats Exp $
+
+/**
+ * @file
+Users cannot be trusted to categorise things themselves, and it's too much work for administrators. 
+The vocabulary terms make up the sections in the 'yellow pages', while the synonyms are used to make matches. Synonyms can be words or word stems. If a vocabulary is 'required', then the heaviest term will be used as a catch-all, or misc.
+The module provides a checkbox in the vocabulary edit settings fieldset, which puts the module into action when a node is submitted. The synonyms in the vocabulary iterate through the the title and body of the node looking for a match or matches.
+The module also provides a button on that page, which will recategorise all the content in the governed types. This means the whole category system is flexible and can evolve and be tweaked.
+ */
+ 
+ /*
+ Module also includes a bug fix for http://drupal.org/node/748412
+ */
+ 
+function autocategorise_form_taxonomy_overview_terms_alter(&$form, $form_state) {
+  $form['#submit'] = array('autocategorise_taxonomy_overview_terms_submit');
+}
+function autocategorise_taxonomy_overview_terms_submit($form, $form_state) {
+  if ($form_state['clicked_button']['#value'] == t('Reset to alphabetical')) {
+    // Execute the reset action.
+    if ($form_state['values']['reset_alphabetical'] === TRUE) {
+      return taxonomy_vocabulary_confirm_reset_alphabetical_submit($form, $form_state);
+    }
+    // Rebuild the form to confirm the reset action.
+    $form_state['rebuild'] = TRUE;
+    $form_state['confirm_reset_alphabetical'] = TRUE;
+    return;
+  }
+
+  $order = array_flip(array_keys($form['#post'])); // Get the $_POST order.
+  $form_state['values'] = array_merge($order, $form_state['values']); // Update our original form with the new order.
+
+  $vocabulary = $form['#vocabulary'];
+  $hierarchy = 0; // Update the current hierarchy type as we go.
+
+  $changed_terms = array();
+  $tree = taxonomy_get_tree($vocabulary['vid']);
+
+  if (empty($tree)) {
+    return;
+  }
+
+  // Build a list of all terms that need to be updated on previous pages.
+  $weight = 0;
+  $term = (array)$tree[0];
+  while ($term['tid'] != $form['#first_tid']) {
+    if ($term['parents'][0] == 0 && $term['weight'] != $weight) {
+      $term['parent'] = $term['parents'][0];
+      $term['weight'] = $weight;
+      $changed_terms[$term['tid']] = $term;
+    }
+    $weight++;
+    $hierarchy = $term['parents'][0] != 0 ? 1 : $hierarchy;
+    $term = (array)$tree[$weight];
+  }
+
+  // Renumber the current page weights and assign any new parents.
+  $level_weights = array();
+  foreach ($form_state['values'] as $tid => $values) {
+    if (isset($form[$tid]['#term'])) {
+      $term = $form[$tid]['#term'];
+      // Give terms at the root level a weight in sequence with terms on previous pages.
+      if ($values['parent'] == 0 && $term['weight'] != $weight) {
+        $term['weight'] = $weight;
+        $changed_terms[$term['tid']] = $term;
+      }
+      // Terms not at the root level can safely start from 0 because they're all on this page.
+      elseif ($values['parent'] > 0) {
+        $level_weights[$values['parent']] = isset($level_weights[$values['parent']]) ? $level_weights[$values['parent']] + 1 : 0;
+        if ($level_weights[$values['parent']] != $term['weight']) {
+          $term['weight'] = $level_weights[$values['parent']];
+          $changed_terms[$term['tid']] = $term;
+        }
+      }
+      // Update any changed parents.
+      if ($values['parent'] != $term['parent']) {
+        $term['parent'] = $values['parent'];
+        $changed_terms[$term['tid']] = $term;
+      }
+      $hierarchy = $term['parent'] != 0 ? 1 : $hierarchy;
+      $weight++;
+    }
+  }
+
+  // Build a list of all terms that need to be updated on following pages.
+  for ($weight; $weight < count($tree); $weight++) {
+    $term = (array)$tree[$weight];
+    if ($term['parents'][0] == 0 && $term['weight'] != $weight) {
+      $term['parent'] = $term['parents'][0];
+      $term['weight'] = $weight;
+      $changed_terms[$term['tid']] = $term;
+    }
+    $hierarchy = $term['parents'][0] != 0 ? 1 : $hierarchy;
+  }
+
+  // Save all updated terms.
+  foreach ($changed_terms as $term) {
+  	$term['synonyms'] = implode("\n", taxonomy_get_synonyms($term['tid']));
+    taxonomy_save_term($term);
+  }
+
+  // Update the vocabulary hierarchy to flat or single hierarchy.
+  if ($vocabulary['hierarchy'] != $hierarchy) {
+    $vocabulary['hierarchy'] = $hierarchy;
+    taxonomy_save_vocabulary($vocabulary);
+  }
+}
+ 
+/**
+ * Implementation of hook_help)().
+ * http://api.drupal.org/api/function/hook_help/6
+ */
+function autocategorise_module_help($section) {
+  switch ($section) {
+    case 'admin/help#search':
+      return '<p>'. t('Allows contentTypes to be automatically categorised by a vocabulary, either on submission, or when prompted on the settings page') .'</p>';
+    case 'admin/content/taxonomy/autocategorise':
+      return '<p>'. t('For each ContentType listed here, there is a button ') .'</p>';
+  }
+}
+
+/**
+ * Implementation of hook_form_alter)().
+ * http://api.drupal.org/api/function/hook_form_alter/6
+ * Perform alterations before a form is rendered.
+ */
+function autocategorise_form_alter(&$form, $form_state, $form_id) {
+  //on the contentType_node_form, we need to remove the taxonomy fields for autovocabs
+  if (strpos($form_id, '_node_form')){
+    $all_autovocabs = variable_get('autocategorise_vids', array());
+    if (count($all_autovocabs)){
+      foreach ($all_autovocabs as $vid => $val){
+        if ($val)unset($form['taxonomy'][$vid]);
+      }
+    }
+  }
+  
+  //reminds users that even with autocategorisations, they still need to apply the vocabulary to the contentType on the vocabulary settings page
+  else if ($form_id == "taxonomy_form_vocabulary"){
+    $autoSetting=is_auto_vocab(arg(5));
+    $form['settings']['auto']= array(
+      '#type' => 'checkbox',
+      '#title' => 'Apply automatically to contentTypes listed above',
+      '#default_value' => $autoSetting,
+      '#description' => ' '. t('When a node is submitted this vocabulary will scan it and match the node title and body against the term sysnonyms.')
+    );
+    $form['autocategorise']=array(
+      '#type'=>'submit',
+      '#value'=> t('Save and autocategorise'),
+    );
+    $form['settings']['required']['#description'] .= t('Autocategorise will assume that the last, heaviest term is the <em>misc</em>, or <em>other</em> category');
+    $form['#submit'][] ='autocategorise_taxonomy_form_vocabulary_submit';
+  }
+  
+  //next to the synonym field, users are reminded what to put in there.
+  elseif ($form_id == "taxonomy_form_term"){
+    if (!is_auto_vocab($form['#vocabulary']['vid'])) return;
+    //move the synonyms out of the advanced fieldset 
+    $form['synonyms'] = $form['advanced']['synonyms'];
+    unset ($form['advanced']['synonyms']);
+    //the other items don't have weight, so we need to add weights to place the synonyms
+    $form['advanced']['#weight'] = 2;
+    $form['submit']['#weight'] = 3;
+    $form['delete']['#weight'] = 3;
+    $form['synonyms']['#title'] = t('Synonyms, used by autocategorise for matching against');
+    $form['synonyms']['#description'] = t('Autocategorise will try to match each line against the node title and body. So put one word or word stems per line.');
+    $form['#submit'][] = 'autocategorise_vocabulary';
+  }
+} 
+ 
+/**
+ * Implementation of hook_nodeapi)().
+ * http://api.drupal.org/api/function/hook_nodeapi/6
+ */
+function autocategorise_nodeapi($node, $op) {
+  if ($op=='insert' || $op=='update'){
+    //get all the vocabs which govern this node 
+    $vocabs = taxonomy_get_vocabularies($node->type);
+    if (!count($vocabs)) return;
+    foreach ($vocabs as $vocab) {
+      if (is_auto_vocab($vocab->vid)){
+        $terms = get_array_for_matching($vocab->vid);
+        $misc=_apply_vocab_to_node($node, $terms, $vocab);
+      }
+    }
+  }
+}
+
+//on pressing the vocabulary autocategorise buttons, all governed nodes will be recategorised by the currenct vocab.
+function autocategorise_taxonomy_form_vocabulary_submit($form, &$form_state){
+  $vid = $form['vid']['#value'];
+  //update the variable containing a list of of autovocabs
+  $vArray=variable_get('autocategorise_vids', array());
+  $vArray[$vid] = $form['settings']['auto']['#value'];
+  variable_set('autocategorise_vids', $vArray);
+  //if the autocategorise button was pressed then remove all tags from this vocab, and recategorise
+  if ($form['#post']['op'] == t('Save and autocategorise') ){
+    autocategorise_vocabulary($vid);
+  } 
+}
+
+function autocategorise_vocabulary($vid) {
+  if (is_array($vid)) {$vid = $vid['vid']['#value'];} //called by taxonomy_form_term submission
+  $vocabs = taxonomy_get_vocabularies();
+  $result = db_query("SELECT type from {vocabulary_node_types} WHERE vid = %d", array(':vid' => $vid));
+  while ($type = db_result($result)) {
+    autocategorise_type($type, $vocabs[$vid]);
+    $done=TRUE;
+  }
+  if (!$done){
+    drupal_set_message(t('You need to select some contentTypes for this vocabulary before you can autocategorise'));
+  } 
+}
+
+function autocategorise_type($type, $vocab){
+  //get all the nodes for the contentType
+  $results = db_query("SELECT nid FROM {node} WHERE type = '%s' AND status=1", array($type) );
+  while ($nid = db_result($results)){
+    $nids[] = $nid;
+  }
+  $terms = get_array_for_matching($vocab->vid);
+  if (!count($nids)) return;
+  foreach ($nids as $nid){
+    $node = node_load(array('nid' => $nid));
+    _apply_vocab_to_node($node, $terms, $vocab);
+  }
+}
+
+function _apply_vocab_to_node($node, $terms, $vocab){
+  if (!count($terms)) {
+   drupal_set_message("Vocabulary $vocab->vid has no terms in it");
+   return; 
+  }
+  
+  // Append title to body of node 
+  $haystack = strtolower($node->title .' '. $node->body);
+  
+  foreach ($terms as $tid => $synonyms) {
+    foreach ($synonyms as $synonym) {
+      //This will compare parts of words using strpos instead of whole words
+      if ( is_int(strpos($haystack, strtolower($synonym)))){
+        $matched_nids[] = $tid;
+        break 1;
+      }
+    }
+    if (count($matched_nids) && !$vocab->multiple ) break;
+  }
+  if ( empty( $matched_nids ) && $vocab->required ){
+    //this will be the last term in terms, which is used as a catch all
+    $matched_nids[] = $tid;
+  }
+  //tax_node save deletes all the terms applied to this node, and reapplies them
+  //so we have to get all the current terms
+  //this is very similar to $node->taxonomy but the format of that variable seems to vary according to circumstances.
+  $result = db_query("SELECT d.tid from {term_node} n LEFT JOIN {term_data} d on n.tid = d.tid WHERE n.nid = %d AND d.vid <> %d", $node->nid, $vocab->vid);
+   while ($tid = db_result($result) ){
+    $matched_nids[] = $tid;
+  }
+  if(count($matched_nids)) {
+    taxonomy_node_save($node, array_unique($matched_nids));
+  }
+}
+
+//returns an array with terms and their synonyms indexed by tid
+function get_array_for_matching($vid) {
+  $term_object_array = taxonomy_get_tree($vid);
+  foreach ($term_object_array as $term) {
+    $tid = $term->tid;
+    $term_list = array();
+    $term_list[] = $term->name;
+    $fetch_synonym_list = taxonomy_get_synonyms($tid);
+    foreach ($fetch_synonym_list as $syn) {
+      $term_list[] = $syn;
+    }
+    $synonyms[$tid] = array_unique($term_list);
+  }
+  if (count($synonyms)) {
+    return $synonyms;
+  }
+  else {
+    form_set_error(t('Autocategorise cannot continue with no terms in vocabulary '.$vid));
+  }
+}
+
+//checks to see if a vocabulary is defined as automatic
+function is_auto_vocab($vid){
+  $autoVocabs= variable_get('autocategorise_vids', array());
+  return $autoVocabs[$vid];
+}
+
+//autocategorise every vocabulary
+function recategorise() {
+  $vocabs = taxonomy_get_vocabularies();
+  foreach ($vocabs as $vocab) {
+  autocategorise_vocabulary($vocab->vid);
+  }
+}
