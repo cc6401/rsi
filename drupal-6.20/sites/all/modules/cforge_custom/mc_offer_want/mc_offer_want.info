@@ -1,0 +1,8 @@
+; $Id:
+name = Mc offers/wants
+description = Allows users to contribute to a categorised directory of offers and wants.
+core = "6.x"
+dependencies[] = views
+dependencies[] = taxonomy
+files[] = mc_offer_want.module
+files[] = mc_offer_want.install

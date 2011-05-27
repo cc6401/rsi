@@ -1,0 +1,7 @@
+; $Id$
+name = "Cforge printable directories"
+description = "Implements link to printerfriendly pages of wants, offers and members."
+core=6.x
+dependencies[] = views
+dependencies[] = mc_offer_want
+stylesheet[all] = cforge_print

@@ -1,0 +1,19 @@
+/*member list view with double alpha pager*/
+.view-member-list .attachment-before .view-header,
+.view-member-list .attachment-before .view-content {
+	float:left;
+	padding-right:1em;
+	clear:none;
+}
+.view-member-list .attachment-before .view-header p{
+	 margin-top:0;
+	}
+.view-content{
+	clear:both;
+}
+.view-member-list .views-summary-unformatted a:visited{text-decoration:none;}
+
+.view .image-gallery-nodes ul li{
+  vertical-align:top;
+  height:180px !important;
+  }

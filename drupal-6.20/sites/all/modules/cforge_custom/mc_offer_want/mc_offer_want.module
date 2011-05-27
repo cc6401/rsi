@@ -1,0 +1,333 @@
+<?php
+// $Id: mc_offer_want.module,v 1.9 2010/10/02 15:54:27 matslats Exp $
+/**
+ * Implementation of hook_help)().
+ * http://api.drupal.org/api/function/hook_help/6
+ */
+function mc_offer_want_help($section) {
+  switch ($section) {
+    case 'admin/help#offers_wants':
+      return t('Defines two contentTypes which are created and edited by each user and which are presented as a directory categorised using taxonomy.');
+  }
+}
+
+/**
+ * Implementation of hook_node_info)().
+ * http://api.drupal.org/api/function/hook_node_info/6
+  * This hook is required for modules to define one or more node types.
+ */
+function mc_offer_want_node_info(){
+  
+  //the status = TRUE seems to have no effect so it's fixed in form_alter
+    $types['offer'] = array(
+      'name' => 'Offer',
+      'module' => 'mc_offer_want',
+      'description' => t('An entry in the @type directory.', array('@type' => t('offer'))),
+      'has_title' => TRUE,
+      'title_label' => t('Product or service you are offering'),
+      'status' => TRUE
+    );
+    $types['want'] = array(
+      'name' => 'Want',
+      'module' => 'mc_offer_want',
+      'description' => t('An entry in the @type directory.', array('@type' => t('want'))),
+      'has_title' => TRUE,
+      'title_label' => t('Product or service you need'),
+      'status' => TRUE
+    );
+  return $types;
+}
+
+function mc_offer_want_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'mc_offer_want'),
+  );
+}
+
+
+/**
+ * Implementation of hook_perm)().
+ * http://api.drupal.org/api/function/hook_perm/6
+ */
+function mc_offer_want_perm(){
+  $permissions = array('view directory', 'edit directory');
+  $permissions[] = 'create offer';
+  $permissions[] = 'create want';
+  return $permissions;
+}
+
+/**
+ * Implementation of hook_access().
+ * http://api.drupal.org/api/function/hook_access/6
+ */
+function mc_offer_want_access($op, $node=NULL, $account=NULL){
+  if (is_string($node)){
+    $type=$node;
+  } else {
+    $type=$node -> type;
+  }
+  switch ($op){
+    //node_access isn't doing this
+    case 'view':
+      return user_access('view directory');
+    case 'create':
+	    return user_access('create '.$type);
+      break;
+    case 'update':
+    case 'delete':
+      //user can always access their own offers/wants
+      if ($node ->uid == $account -> uid || user_access('edit directory')) return TRUE;
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_block().
+ * http://api.drupal.org/api/function/hook_block/6
+ */
+function mc_offer_want_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      $blocks['cc_categories']= array(
+        'info' => 'Cc ' . t('categories'),
+        'cache' => BLOCK_CACHE_PER_PAGE,
+        'visibility' =>1,
+        'pages' => 'directory*',
+      );
+      $blocks['cc_add_item']= array(
+        'info' => 'Cc ' . t('Add offers/wants'),
+        'cache' => BLOCK_CACHE_PER_PAGE,
+        'visibility' =>1,
+        'pages' => 'directory*',
+      );
+      return $blocks;
+      
+    case 'view':
+      //determine whether to show offers, wants, or both. according to the path
+      $names = array('offer' => t('Offer'), 'want' => t('Want'));
+      //check the url and if neither is present, show all the named types.
+      foreach ($names as $type => $name) {
+        //if the type is in the url then go for it
+        if (strpos ($_GET['q'], $type)) {
+          $types[$type] = $name;
+          break;
+        }
+      }
+      if (!isset($types)) $types = $names;
+      
+      switch ($delta) {
+        case 'cc_categories':
+          $subject = t('@offerwant Categories', array('@offerwant' => $name));
+          foreach ($types as $type=>$name) {
+            $content .= type_category_count($type, 'directory/recent_'.$type.'s');
+          }
+          break;
+        case 'cc_add_item':
+          if (count($types) == 1) {
+            $subject = t('Place your @offerwant', array('@offerwant' => $name));
+            require_once(drupal_get_path('module', 'node').'/node.pages.inc');
+            $title = drupal_get_title();
+            //unfortunately this function changes the page title
+            $content = node_add($type);
+            drupal_set_title($title);
+          } else {
+            $subject = t('Place your @offerwant');
+            $content = drupal_get_form('create_offer_or_want_form');
+          }
+          break;
+      }
+      return array(
+        'subject' => $subject,
+        'content' => $content,
+      );
+  }
+}
+
+/**
+ * Implementation of hook_form)().
+ * http://api.drupal.org/api/function/hook_form/6
+ */
+function mc_offer_want_form(&$node, $param){
+  global $user;
+  $type = node_get_types('type', $node);
+  $form['title'] = array (
+    '#type' => 'textfield',
+    '#title' => check_plain($type->title_label),
+    '#required' => TRUE,
+    '#default_value' => $node->title,
+  );
+  if ($type->has_body) {
+    $form['body'] = array (
+      '#type' => 'textarea',
+      '#title' => check_plain($type->body_label),
+      '#default_value' => $node->body,
+      '#required' => FALSE,
+    );
+  }
+  $form['#redirect']='user/'.$user->uid.'/directory';
+  return $form;
+}
+
+/**
+ * Implementation of hook_form_alter)().
+ * http://api.drupal.org/api/function/hook_form_alter/6
+ */
+function mc_offer_want_form_alter(&$form, $form_state, $form_id){
+  switch ($form_id) {
+    case 'offer_node_form':
+    case 'want_node_form':
+      $form['menu']['#access'] = FALSE;
+      $form['path']['#access'] = FALSE;
+      $form['comment_settings']['#access'] = FALSE;
+      $form['options']['#access'] = FALSE;
+      $form['options']['status']['#value'] = TRUE;
+      $form['revision_information']['#access'] = FALSE;
+      $form['author']['#access'] = FALSE;
+    	unset($form['buttons']['preview']);
+      if (isset($form['buttons']['delete'])) {  //redirect interferes with delete
+        unset($form['#redirect']);
+      }
+      break;
+  }
+}
+
+
+/** 
+ * Implementation of hook_theme)().
+ * http://api.drupal.org/api/function/hook_theme/6
+ */
+function mc_offer_want_theme($existing, $type, $theme, $path){
+  //HELP!! I can't get it to recognise the offer.tpl.php in the module folder
+  return array(
+    'addanew_link' => array(
+      'arguments' => array('type' => NULL),
+      'function' => 'theme_addanew_link',
+    ),
+  );
+}
+
+function mc_offer_want_user($op, &$edit, &$account, $category = NULL) {
+  switch($op) {
+    case 'delete':
+      db_query("DELETE FROM {node} WHERE uid = %d AND (type = 'offer' OR type = 'want')", array(':uid' => $account->uid));
+      break; 
+  }  
+}
+
+function type_category_count($nodetype, $link_prefix){
+//TODO need to filter this function by the appropriate vocab
+  $result = db_query("
+    SELECT d.tid, d.name, d.description, COUNT(*) AS count 
+    FROM {term_data} d 
+    INNER JOIN {term_node} USING (tid) 
+    INNER JOIN {node} n USING (nid)
+    LEFT JOIN {users} u USING (uid)
+    WHERE n.type = '%s'
+    AND n.status = 1
+    GROUP BY d.tid, d.name
+    AND u.status = 1
+    ORDER BY d.weight ASC
+    ", $nodetype);
+  $items = array();
+  while ($category = db_fetch_object($result)) {
+    $items[] = l(
+      $category->name .' ('. $category->count .')', 
+      $link_prefix.'/'. $category->tid,
+      array('attributes' => array('title' => $category->description))
+    );
+  }
+  //TODO add theme function theme_add_directory_entry which provides link to node/add/offer or want
+  return theme('item_list', $items) . theme('addanew_link', $nodetype);
+}
+
+/** 
+ * Implementation of hook_link)().
+ * http://api.drupal.org/api/function/hook_link/6
+ * creates links to show at the bottom of the node
+ * so can only be seen when node->body is used
+ */
+function mc_offer_want_link($type, $node) {
+  if ($node->type != 'offer' && $node->type !='want') {
+    return;
+  }
+  foreach ($node->taxonomy as $term) {
+    $links[$term->name . 'offers'] = array(
+      'title' => t('@categoryname @types', array('@categoryname'=> $term->name, '@type' => $node->type)),
+      'href' => 'directory/recent_' . $node->type . 's/'.$term->tid,
+      'attributes' => array('title' => $term->description),
+    );
+  }
+  $owner = user_load($node->uid);
+  $links['contact user'] = array(
+    'title' => t('contact @username', array('@username' => $owner->name)), 
+    'href' => 'user/'.$node->uid.'/contact',
+  );
+  $links['user directory'] = array(
+    'title' => t("@person's directory", array('@person'=> $owner->name)),
+    'href' => 'user/'.$node->uid.'/directory',
+  );
+  return $links;
+}
+
+//used for putting the links at the bottom of views //not a hook!
+function theme_addanew_link ($type) {
+  if (!user_access('create ' . $type)) return;
+  $object = node_get_types('type', $type);
+//  print_r($object);
+  $link = l($object->name, 'node/add/'.$type);
+  return '<div class = "directory-link">' . t('Click to add a new !item', array('!item' => $link)) . '</div>';
+}
+
+//I don't think it's possible to hack the node form to put a choice of contentType, so I'm making my own form
+function create_offer_or_want_form() {
+  $types = node_get_types();
+  
+  $form = array();
+  $form['content_type'] = array(
+    '#type' => 'radios',
+    '#title' => t('Which directory?'),
+    '#weight' => 0,
+    '#options' => array (
+      'offer' => t('Offer'),
+      'want' => t('Want')
+    )
+  );
+  $form['title'] = array (
+    '#type' => 'textfield',
+    '#title' => t('Text of your advert'),
+    '#weight' => 1,
+  );
+  if ($types['offer']->has_body || $types['want']->has_body) {
+    $form['body'] = array (
+      '#type' => 'textarea',
+      '#title' => t('Details'),
+      '#weight' => 2,
+    );
+  }
+  $form['submit'] = array (
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+    '#weight' => 3,
+  );
+  return $form;
+}
+
+function create_offer_or_want_form_submit($form, &$form_state) {
+  generate_offer_want_node($form_state['values']['content_type'], $GLOBALS['user']->uid, $form_state['values']['title'], $form_state['values']['body']);
+}
+
+function generate_offer_want_node($type, $owner, $title, $body='') {
+  $node = new stdClass();
+  $node->title = $title;
+  $node->type = $type;
+  $node->created = time();
+  $node->changed = $node->created;
+  $node->status = 1;
+  $node->promote = 0;
+  $node->sticky = 0;
+  $node->format = 1;
+  $node->uid = $owner;
+  if ($body) $node->body = $body;
+  node_save($node);
+}

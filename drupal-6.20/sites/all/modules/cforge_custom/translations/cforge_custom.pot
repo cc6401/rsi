@@ -1,0 +1,474 @@
+# $Id$
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  cforge_custom.views.inc: n/a
+#  cforge_custom.install: n/a
+#  cforge_custom.module: n/a
+#  cforge_custom.info: n/a
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-05-17 12:46+0000\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+
+msgid "Account"
+msgstr ""
+
+#: cforge_custom.views.inc:10
+msgid "member list, dynamic and printable"
+msgstr ""
+
+msgid "Member list"
+msgstr ""
+
+#: cforge_custom.views.inc:28;308
+msgid "First Name"
+msgstr ""
+
+#: cforge_custom.views.inc:52;335
+msgid "Name"
+msgstr ""
+
+#: cforge_custom.views.inc:61
+msgid "Last login"
+msgstr ""
+
+#: cforge_custom.views.inc:71;344
+msgid "Balance"
+msgstr ""
+
+#: cforge_custom.views.inc:79;270;352
+msgid "Gross Income"
+msgstr ""
+
+#: cforge_custom.views.inc:103
+msgid "Currency"
+msgstr ""
+
+#: cforge_custom.views.inc:156
+msgid "Members directory"
+msgstr ""
+
+#: cforge_custom.views.inc:205
+msgid "All Members"
+msgstr ""
+
+#: cforge_custom.views.inc:262
+msgid "Pending Balance"
+msgstr ""
+
+#: cforge_custom.views.inc:281
+msgid "Click for a more <a href=\"/members/print\">printable</a> version of this list"
+msgstr ""
+
+#: cforge_custom.views.inc:286
+msgid "Members"
+msgstr ""
+
+#: cforge_custom.views.inc:297
+msgid "Members (Printable)"
+msgstr ""
+
+#: cforge_custom.views.inc:363 cforge_custom.install:27
+msgid "Area Code"
+msgstr ""
+
+#: cforge_custom.views.inc:417
+msgid "Click for a more <a href=\"/members\">dynamic</a> version of this list"
+msgstr ""
+
+#: cforge_custom.views.inc:475
+msgid "contact users by role"
+msgstr ""
+
+#: cforge_custom.views.inc:618
+msgid "Committee contacts"
+msgstr ""
+
+#: cforge_custom.views.inc:642
+msgid "list of addresses to post to"
+msgstr ""
+
+#: cforge_custom.views.inc:768
+msgid "Addresses"
+msgstr ""
+
+#: cforge_custom.views.inc:769
+msgid "These members have all checked the box 'postal' in their user profile"
+msgstr ""
+
+#: cforge_custom.views.inc:869
+msgid "Postage"
+msgstr ""
+
+#: cforge_custom.views.inc:870
+msgid "List of addresses"
+msgstr ""
+
+#: cforge_custom.views.inc:883
+msgid "first name"
+msgstr ""
+
+#: cforge_custom.views.inc:1001
+msgid "Latest story in full, with list of stories"
+msgstr ""
+
+#: cforge_custom.views.inc:1062;1077
+msgid "Recent news"
+msgstr ""
+
+#: cforge_custom.views.inc:1063
+msgid "No news items have been posted yet"
+msgstr ""
+
+#: cforge_custom.views.inc:1087
+msgid "News"
+msgstr ""
+
+#: cforge_custom.views.inc:1112;1115
+msgid "Old news"
+msgstr ""
+
+#: cforge_custom.views.inc:1383
+msgid "A multi-dimensional calendar view with back/next navigation."
+msgstr ""
+
+#: cforge_custom.views.inc:1597;1626
+msgid "Calendar"
+msgstr ""
+
+#: cforge_custom.views.inc:1628
+msgid "Year view"
+msgstr ""
+
+#: cforge_custom.views.inc:1644
+msgid "Month view"
+msgstr ""
+
+#: cforge_custom.views.inc:1662
+msgid "Day view"
+msgstr ""
+
+#: cforge_custom.views.inc:1682
+msgid "Week view"
+msgstr ""
+
+#: cforge_custom.views.inc:1717;1788;1796
+msgid "Upcoming"
+msgstr ""
+
+#: cforge_custom.views.inc:1925
+msgid "Upcoming Events"
+msgstr ""
+
+#: cforge_custom.module:15
+msgid "CForge account"
+msgstr ""
+
+#: cforge_custom.module:16
+msgid "Your account"
+msgstr ""
+
+#: cforge_custom.module:24
+msgid "Import Transactions"
+msgstr ""
+
+#: cforge_custom.module:25
+msgid "Import transactions from a csv file"
+msgstr ""
+
+#: cforge_custom.module:53
+msgid "Import"
+msgstr ""
+
+#: cforge_custom.module:54
+msgid "Import users with ids and the cforge profile fields"
+msgstr ""
+
+#: cforge_custom.module:62
+msgid "Import members"
+msgstr ""
+
+#: cforge_custom.module:129
+msgid "The name of your community"
+msgstr ""
+
+#: cforge_custom.module:130
+msgid "This will show at the top of your web site)"
+msgstr ""
+
+#: cforge_custom.module:131
+msgid "Slogan shows next to the site name"
+msgstr ""
+
+#: cforge_custom.module:135
+msgid "Site email"
+msgstr ""
+
+#: cforge_custom.module:136
+msgid "Email address from which the site sends. New member notification and transaction notifications will be from: this address."
+msgstr ""
+
+#: cforge_custom.module:150
+msgid "Password"
+msgstr ""
+
+#: cforge_custom.module:195
+msgid "Jumpdown links"
+msgstr ""
+
+#: cforge_custom.module:199
+msgid "Member's menu"
+msgstr ""
+
+#: cforge_custom.module:209
+msgid "On this page..."
+msgstr ""
+
+#: cforge_custom.module:233
+msgid "Balances"
+msgstr ""
+
+#: cforge_custom.module:243;246
+msgid "Pending transactions"
+msgstr ""
+
+#: cforge_custom.module:268
+msgid "Site hosting with @count members paid until"
+msgstr ""
+
+#: cforge_custom.module:270
+msgid "Only user 1 can edit this field"
+msgstr ""
+
+#: cforge_custom.module:285
+msgid "Paste a csv using the example text as a close guide. <strong>Include the first row exactly as here.</strong> Watch out for non-latin characters. Members' language will be set to @lang. \n  <br />*uid: a number to identify the user. For logging in.\n  <br />*username: the user's family name.\n  <br />profile_firstname: the user's first name.\n  <br />*email: the user's email.\n  <br />*password: the user's password (if you don't have it un-encrypted, then set a default).\n  <br />createddate: the date the user joined the system; format YYYY-MM-DD or see php.net/strtotime \n  <br />profile_expires: the date the user's membership fees become due; format YYYY-MM-DD or see php.net/strtotime \n  <br />profile_phone1: the user's main phone number.\n  <br />balance: the user's balance before any transactions are entered into this system.\n  <br />gross_income: the user's total income ever.\n  <br />profile_locality: post code, or zip code, or area, used to make geographical sub-groupings.\n  <br />*profile_responsibility: the job title (committee members only), no commas."
+msgstr ""
+
+#: cforge_custom.module:301
+msgid "csv data, quotes will be ignored"
+msgstr ""
+
+#: cforge_custom.module:318
+msgid "first field, uid is not numeric on row @num"
+msgstr ""
+
+#: cforge_custom.module:321
+msgid "Sixth field, createddate, cannot be converted by strtotime() for user @uid"
+msgstr ""
+
+#: cforge_custom.module:324
+msgid "Seventh field, profile_expires, cannot be converted by strtotime() for user @uid"
+msgstr ""
+
+#: cforge_custom.module:327
+msgid "Ninth field, balance, is not numeric for user @uid"
+msgstr ""
+
+#: cforge_custom.module:330
+msgid "Tenth field, gross income, is not a positive integer for user @uid"
+msgstr ""
+
+#: cforge_custom.module:341
+msgid "committee"
+msgstr ""
+
+#: cforge_custom.module:356
+msgid "User @uid has been imported with invalid email address: @address"
+msgstr ""
+
+#: cforge_custom.module:388
+msgid "Paste a csv using the example text as a close guide. Include the first row exactly as here"
+msgstr ""
+
+#: cforge_custom.module:489
+msgid "Description"
+msgstr ""
+
+#: cforge_custom.module:490
+msgid "With Whom?"
+msgstr ""
+
+#: cforge_custom.module:491
+msgid "Amount"
+msgstr ""
+
+#: cforge_custom.module:492
+msgid "Rating"
+msgstr ""
+
+#: cforge_custom.module:493
+msgid "Running Total"
+msgstr ""
+
+#: cforge_custom.module:494
+msgid "Done?"
+msgstr ""
+
+#: cforge_custom.module:495 cforge_custom.install:23
+msgid ""
+msgstr ""
+
+#: cforge_custom.module:530
+msgid "@username's statement for @month"
+msgstr ""
+
+#: cforge_custom.module:0
+msgid "cforge_custom"
+msgstr ""
+
+#: cforge_custom.install:9
+msgid "Manage"
+msgstr ""
+
+#: cforge_custom.install:9
+msgid "Links for the day to day administration of the site"
+msgstr ""
+
+#: cforge_custom.install:10
+msgid "Setup"
+msgstr ""
+
+#: cforge_custom.install:10
+msgid "Switch off this block in your user profile"
+msgstr ""
+
+#: cforge_custom.install:11
+msgid "Member's Menu"
+msgstr ""
+
+#: cforge_custom.install:11
+msgid "User profile pages and actions"
+msgstr ""
+
+#: cforge_custom.install:15
+msgid "Responsibility"
+msgstr ""
+
+#: cforge_custom.install:15;19
+msgid "Job title, for committee members only"
+msgstr ""
+
+#: cforge_custom.install:19
+msgid "First name"
+msgstr ""
+
+#: cforge_custom.install:23
+msgid "Phone Number"
+msgstr ""
+
+#: cforge_custom.install:27
+msgid "This may be the zip code, or some other way to group the members geographically"
+msgstr ""
+
+#: cforge_custom.install:31
+msgid "Membership Expires"
+msgstr ""
+
+#: cforge_custom.install:31
+msgid "The date the membership fees run out"
+msgstr ""
+
+#: cforge_custom.install:35
+msgid "Postal member"
+msgstr ""
+
+#: cforge_custom.install:35
+msgid "Please post printed directories to me "
+msgstr ""
+
+#: cforge_custom.install:39
+msgid "Address"
+msgstr ""
+
+#: cforge_custom.install:39
+msgid "This is necessary if you want to receive printed updates"
+msgstr ""
+
+#: cforge_custom.install:44
+msgid "Site information"
+msgstr ""
+
+#: cforge_custom.install:50
+msgid "Graphics"
+msgstr ""
+
+#: cforge_custom.install:56
+msgid "Default currency"
+msgstr ""
+
+#: cforge_custom.install:62
+msgid "Rating Scale"
+msgstr ""
+
+#: cforge_custom.install:70
+msgid "Welcome email"
+msgstr ""
+
+#: cforge_custom.install:70
+msgid "Document Types"
+msgstr ""
+
+#: cforge_custom.install:76
+msgid "Major menu"
+msgstr ""
+
+#: cforge_custom.install:82;88
+msgid "Minor menu"
+msgstr ""
+
+#: cforge_custom.install:94
+msgid "Manage content"
+msgstr ""
+
+#: cforge_custom.install:101
+msgid "Manage categories"
+msgstr ""
+
+#: cforge_custom.install:107
+msgid "Contact form"
+msgstr ""
+
+#: cforge_custom.install:113
+msgid "User management"
+msgstr ""
+
+#: cforge_custom.install:119
+msgid "Manage Galleries"
+msgstr ""
+
+#: cforge_custom.install:125
+msgid "Postal Members"
+msgstr ""
+
+#: cforge_custom.info:0
+msgid "Cforge custom"
+msgstr ""
+
+#: cforge_custom.info:0
+msgid "Community Forge configuration for it's cookie-cut sites"
+msgstr ""
+
+#: cforge_custom.info:0
+msgid "Complementary Currencies"
+msgstr ""
+
+msgid "Choose the letter of the surname of the member you are trying to find below and/or sort by column to find an e-member quickly."
+msgstr ""
+
+msgid "Once on a member's page, you can easily enter a trade with them using the using the block to the left."
+msgstr ""
+
+msgid "No documents have been entered yet"
+msgstr ""
