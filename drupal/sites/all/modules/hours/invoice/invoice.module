@@ -1,0 +1,737 @@
+<?php
+// $Id: invoice.module,v 1.1 2009/09/14 18:41:37 axlroach Exp $
+/**
+ * @file
+ * Module for creating invoices from 'Hours' content
+ */
+
+ /**
+ * Implementation of hook_help()
+ */
+function invoice_help($path, $arg) {
+  
+  if ($path == 'admin/help#invoice') {
+    $txt = 'The Invoice module uses the time entry data from the Hours module '
+      .'to create an invoice.';
+    return '<p>'. t($txt) .'</p>';
+  }
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function invoice_perm() {
+  return array('create own invoices', 'edit own invoices', 'send invoice nodes', 'delete own invoices', 'administer invoices');
+}
+
+/**
+ * Implements hook_access()
+ */
+function invoice_access($op, $node, $account) {
+  switch ($op) {
+    case 'create':
+      return user_access('create own invoices', $account);
+    case 'update':
+      return user_access('edit own invoices', $account);
+    case 'delete':
+      return user_access('delete own invoices', $account);
+  }
+}
+
+function invoice_node_load($nid) {
+  global $user;
+  $node = node_load($nid);
+  if (($node->uid == $user->uid && user_access('send invoice nodes')) || user_access('administer invoices')) {
+    if ($node->type == 'invoice') {
+      return $node;
+    }
+  }
+  return FALSE;
+}
+
+function submit_invoice_tab() {
+  global $base_url;
+  
+  // Make sure that the path is 'node/<nid>/submit_invoice.
+  // This tells us that we are on the 'Submit Invoice' tab.
+  // If we aren't for some reason, then return FALSE.
+  if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'submit_invoice') {
+    $node = node_load(arg(1));
+  }
+  else {
+    return FALSE;
+  }
+  
+  
+  // Set up the output.
+  $output = "";
+  
+  $url = $base_url .'/invoice/send/'. $node->nid;
+  
+  $output .= '<a href="'. $url .'">Send this invoice</a>';
+  
+  //$output .= theme('hours_submission', $single_url, $batch_url);
+  return $output;
+}
+
+// This is now a duplicate of _invoice_is_paid
+function _can_send_invoice($invoice) {
+  $sent = array();
+  
+  $result = db_query("SELECT nid FROM {invoices_sent}");
+  while ($row = db_fetch_object($result)) {
+    $sent[] = $row->nid;
+  }
+  
+  if (in_array($invoice->nid, $sent)) {
+    // This invoice has already been sent.  Return false.
+    return FALSE;
+  }
+  // Otherwise we can send this invoice.
+  return TRUE;
+}
+
+function _invoice_is_paid($nid) {
+  $row = db_fetch_object(db_query("SELECT paid FROM {invoices_sent} WHERE nid = %d", $nid));
+  return $row->paid;
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function invoice_menu() {
+  $items = array();
+
+  $items['node/%invoice_node/view'] = array(
+    'title' => 'View',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  
+  $items['admin/invoice/settings'] = array(
+    'title' => t('Invoice Settings'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('invoice_admin_settings'),
+    'access arguments' => array('create own invoices'),
+  );
+
+  // This is the 'Submit Invoice' TAB
+  $items['node/%invoice_node/submit_invoice'] = array(
+    'title' => t('Submit Invoice'),
+    'page callback' => 'submit_invoice_tab',
+    'access callback' => '_can_send_invoice',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  // This is the callback registration for the 
+  // code that's executed when you actually
+  // press the 'send invoice' link.
+  $items['invoice/send/%invoice_node'] = array(
+    'title' => t('Send Invoice'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('invoice_send'),
+    'access arguments' => array('send invoice nodes'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/invoice/list/%'] = array(
+    'title' => t('Invoice List'),
+    'description' => "Administer invoices",
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('invoice_admin_invoice'),
+    'access arguments' => array('administer invoices'),
+  );
+  
+  $items['admin/invoice/%invoice_node/mark_paid'] = array(
+    'title' => t('Mark Paid'),
+    'page callback' => '_set_invoice_paid',
+    'page arguments' => array(2),
+    'access arguments' => array('administer invoices'),
+    'type' => MENU_CALLBACK,  
+  );
+  
+  return $items;
+}
+
+function invoice_admin_invoice($form_state) {
+  $form['admin']  = invoice_admin_list();
+  $form['#theme'] = 'node_filter_form';
+  return $form;
+}
+
+function invoice_node_operations() {
+  $operations = array(
+    'mark_as_paid' => array(
+      'label' => t('Mark As Paid'),
+      'callback' => 'invoice_mass_update',
+      'callback arguments' => array('updates' => 'mark as paid'),
+    ),
+  );
+  
+  return $operations;
+}
+
+function invoice_mass_update($nodes, $updates) {
+  switch ($updates) {
+    case 'mark as paid':
+      foreach ($nodes as $key => $nid) {
+        $result = db_query("UPDATE {invoices_sent} SET paid = 1 WHERE nid = %d", $nid);
+      }
+      break;
+  }
+  drupal_set_message(t('The update has been performed.'));
+}
+
+function invoice_admin_invoice_submit($form, &$form_state) {
+  $operations = module_invoke_all('node_operations');
+  $operation = $operations[$form_state['values']['operation']];
+  // Filter out unchecked nodes
+  $nodes = array_filter($form_state['values']['nodes']);
+  if ($function = $operation['callback']) {
+    // Add in callback arguments if present.
+    if (isset($operation['callback arguments'])) {
+      $args = array_merge(array($nodes), $operation['callback arguments']);
+    }
+    else {
+      $args = array($nodes);
+    }
+    call_user_func_array($function, $args);
+
+    cache_clear_all();
+  }
+}
+
+function invoice_admin_list() {
+
+  $result = pager_query(db_rewrite_sql("SELECT n.*, u.name FROM {node} n INNER JOIN {users} u ON n.uid = u.uid INNER JOIN {invoices_sent} si ON si.nid = n.nid WHERE n.type = 'invoice' AND n.uid = %d ORDER BY n.changed DESC"), 50, 0, NULL, array(arg(3)));
+
+  $form['options'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Update options'),
+    '#prefix' => '<div class="container-inline">',
+    '#suffix' => '</div>',
+  );
+  $options = array();
+  foreach (module_invoke_all('node_operations') as $operation => $array) {
+    $options[$operation] = $array['label'];
+  }
+  $form['options']['operation'] = array(
+    '#type' => 'select',
+    '#options' => $options,
+    '#default_value' => 'approve',
+  );
+  $form['options']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Update'),
+    '#submit' => array('invoice_admin_invoice_submit'),
+  );
+
+  $languages = language_list();
+  $destination = drupal_get_destination();
+  $nodes = array();
+  while ($node = db_fetch_object($result)) {
+    $nodes[$node->nid] = '';
+    $options = empty($node->language) ? array() : array('language' => $languages[$node->language]);
+    $form['title'][$node->nid] = array('#value' => l($node->title, 'node/'. $node->nid, $options) .' '. theme('mark', node_mark($node->nid, $node->changed)));
+    $form['username'][$node->nid] = array('#value' => theme('username', $node));
+    $form['status'][$node->nid] =  array('#value' => (_invoice_is_paid($node->nid) ? t('paid') : t('unpaid')));
+    if ($multilanguage) {
+      $form['language'][$node->nid] = array('#value' => empty($node->language) ? t('Language neutral') : t($languages[$node->language]->name));
+    }
+    $form['operations'][$node->nid] = array('#value' => l(t('edit'), 'node/'. $node->nid .'/edit', array('query' => $destination)));
+  }
+  $form['nodes'] = array('#type' => 'checkboxes', '#options' => $nodes);
+  $form['pager'] = array('#value' => theme('pager', NULL, 50, 0));
+  $form['#theme'] = 'invoice_admin_invoices';
+  return $form;
+}
+
+function _set_invoice_paid($invoice) {
+  global $_GET;
+  
+  $result = db_query("UPDATE {invoices_sent} SET paid = 1 WHERE nid = %d", $invoice->nid);
+  $destination = check_plain($_GET['destination']);
+  
+  drupal_goto($destination);
+}
+
+function _invoice_marked_paid($iid) {
+  $count = db_fetch_object(db_query("SELECT count(*) as c FROM {invoices_sent} WHERE nid = %d AND paid = 1", $iid));
+  if ($count->c == 0) {
+    return FALSE;
+  }
+  return TRUE;
+}
+
+function invoice_send() {
+  global $user;
+  
+  $datetime = time();
+  $date = date('Y-m-d');
+  
+  // Check that this invoice has not already been sent
+  $count = db_fetch_object(db_query("SELECT count(*) as c FROM {invoices_sent} WHERE nid = %d", arg(2)));
+  if ($count->c == 0) {
+    $node = node_load(arg(2));
+    $result = db_query("INSERT INTO {invoices_sent} (vid, nid, uid, date_sent) VALUES (%d, %d, %d, '%s')", $node->vid, $node->nid, $node->uid, $date);
+  }
+  drupal_set_message("Your invoice has been sent.");
+  drupal_goto('node/'. arg(2) .'/view');
+}
+
+function invoice_admin_settings($context) {
+  $form = array();
+
+
+  global $user;
+  
+  $account = user_load($user->uid);
+  
+  $result = db_query("SELECT * FROM {user_invoice_settings} WHERE uid = %d", $account->uid);
+  if ($row = db_fetch_object($result)) {
+    $default_invoicer = $row->invoicer;
+    $default_invoicee = $row->invoicee;
+    $default_invoice_for = $row->invoice_for;
+    $default_payment_terms = $row->payment_terms;
+    $default_hourly_rate = $row->hourly_rate;
+    $default_currency_symbol = $row->currency_symbol;
+  }
+
+  // User info
+  $form['account'] = array(
+    '#type' => 'value',
+    '#value' => $account,
+  );
+  
+  // Textarea for invoicer:
+  $form['invoicer_filter']['invoicer'] = array(
+    '#type' => 'textarea',
+    '#title' => t('From'),
+    '#rows' => 6,
+    '#columns' => 10,
+    '#default_value' => isset($default_invoicer) ? $default_invoicer : '',
+    '#description' => t('The From field at the top of your invoice.'),
+  );
+  
+  // Textarea for invoicee:
+  $form['invoicee_filter']['invoicee'] = array(
+    '#type' => 'textarea',
+    '#title' => t('To'),
+    '#rows' => 6,
+    '#columns' => 10,
+    '#default_value' => isset($default_invoicee) ? $default_invoicee : '',
+    '#description' => t('The To field at the top of your invoice.'),
+  );
+  
+  
+  // Textfield for for:
+  $form['invoice_for'] = array(
+    '#type' => 'textfield',
+    '#title' => t('For'),
+    '#size' => 50,
+    '#maxlength' => 255,
+    '#default_value' => isset($default_invoice_for) ? $default_invoice_for : 'Professional Services',
+    '#description' => t('The for tag in your invoice (ie - Professional Services).'),
+  );
+
+  // Textfield for payment terms:
+  $form['payment_terms'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Payment Terms'),
+    '#size' => 50,
+    '#maxlengh' => 255,
+    '#default_value' => 'Due Upon Receipt',
+    '#default_value' => isset($default_payment_terms) ? $default_payment_terms : 'Due Upon Receipt',
+    '#description' => t('The payment terms for your invoice (ie - Due Upon Receipt).'),
+  );
+  
+  // Textfield for hourly rate:
+  $form['hourly_rate'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Hourly Rate'),
+    '#size' => 50,
+    '#maxlength' => 5,
+    '#default_value' => isset($default_hourly_rate) ? $default_hourly_rate : '',
+    '#description' => t('Your hourly rate with no currency symbol.'),
+  );
+  
+  // Textfield for currency symbol
+  $form['currency_symbol'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Currency Symbol'),
+    '#size' => 1,
+    '#maxlength' => 1,
+    '#default_value' => isset($default_currency_symbol) ? $default_currency_symbol : '',
+    '#description' => t('The currency symbol that should be displayed for totals on your invoice.')
+  );
+  
+  $form['#submit'][] = 'invoice_admin_settings_submit';
+  
+  return system_settings_form($form);
+}
+
+/*
+ * Form submission handler
+ */
+function invoice_admin_settings_submit($form, &$form_state) {
+  $form_values = $form_state['values'];
+
+  $result = db_query("SELECT count(*) as count FROM {user_invoice_settings} WHERE uid = %d", $form_values['account']->uid);
+  if ($row = db_fetch_object($result)) {
+    if ($row->count) {
+      db_query(
+        "UPDATE {user_invoice_settings} "
+      ."set invoicer = '%s', "
+      ."invoicee = '%s', "
+      ."invoice_for = '%s', "
+      ."payment_terms = '%s', "
+      ."hourly_rate = '%s', "
+      ."currency_symbol = '%s'"
+      ."WHERE uid = %d",
+      check_plain($form_values['invoicer']),
+      check_plain($form_values['invoicee']),
+      check_plain($form_values['invoice_for']),
+      check_plain($form_values['payment_terms']),
+      check_plain($form_values['hourly_rate']),
+      check_plain($form_values['currency_symbol']),
+      $form_values['account']->uid
+      );
+    }
+    else {
+      db_query(
+        'INSERT INTO {user_invoice_settings} (uid, invoicer, invoicee, invoice_for, payment_terms, hourly_rate, currency_symbol) '
+          ."VALUES (%d, '%s', '%s', '%s','%s', '%s', '%s')",
+        $form_values['account']->uid,
+        check_plain($form_values['invoicer']),
+        check_plain($form_values['invoicee']),
+        check_plain($form_values['invoice_for']),
+        check_plain($form_values['payment_terms']),
+        check_plain($form_values['hourly_rate']),
+        check_plain($form_values['currency_symbol'])
+      );
+    }
+  }
+  $form_state['redirect'] = 'admin/invoice/settings';
+}
+
+  
+/**
+ * Implementation hook_node_info().
+ */
+function invoice_node_info() {
+  return array(
+    'invoice' => array(
+      'name' => t('Invoice'),
+      'module' => 'invoice',
+      'description' => t('An invoice.'),
+      'has_title' => FALSE,
+      'has_body' => FALSE,
+      'locked' => TRUE,
+    )
+  );
+}
+
+/**
+ * Implementation of hook_form().
+ */
+function invoice_form($node) {
+  global $user;
+
+  $form['account'] = array(
+    '#type' => 'value',
+    '#value' => $user->uid,  
+  );
+  
+  $form['start_date'] = array(
+    '#title' => t('Start Date'),
+    '#type' => 'date_popup',
+    '#date_format' => 'm-d-Y',
+    '#default_value' => isset($node->start_date) ? $node->start_date : '',
+  );
+  
+  $form['end_date'] = array(
+    '#title' => t('End Date'),
+    '#type' => 'date_popup',
+    '#date_format' => 'm-d-Y',
+    '#default_value' => isset($node->end_date) ? $node->end_date : '',
+  );
+  
+  return $form;
+}
+
+/**
+ * Implementation of hook_insert().
+ */
+function invoice_insert($node) {
+  if (!isset($node->start_date)) {
+    $node->client = '';
+  }
+  if (!isset($node->end_date)) {
+    $node->entry = '';
+  }
+
+  db_query(
+    'INSERT INTO {invoice} (vid, nid, uid, start_date, end_date) '
+      ."VALUES (%d, %d, %d, '%s', '%s')",
+    $node->vid,
+    $node->nid,
+    $node->uid,
+    $node->start_date,
+    $node->end_date
+  );
+}
+
+/**
+ * Implementation of hook_update().
+ */
+function invoice_update($node) {
+  if ($node->revision) {
+    invoice_insert($node);
+  }
+  else {
+    db_query("UPDATE {invoice} "
+        ."SET start_date = '%s', end_date = '%s' "
+        ."WHERE vid = %d",
+      $node->start_date,
+      $node->end_date,
+      $node->vid
+    );
+  }
+}
+
+/**
+ * Implementation of hook_delete().
+ */
+function invoice_delete($node) {
+  db_query(
+    'DELETE FROM {invoice} WHERE nid = %d',
+    $node->nid
+  );
+}
+
+/**
+ * Implementation of hook_nodeapi()
+ */
+function invoice_nodeapi(&$node, $op, $teaser, $page) {
+  switch ($op) {
+    case 'presave':
+      if ($node->type != 'invoice') {
+        break;
+      }
+      $account = user_load($node->uid);
+      $node->comment = 0;
+      $node->title = 'Invoice: '. $account->name .' - '. date('m/d/Y', strtotime($node->start_date)) .' - '. date('m/d/Y', strtotime($node->end_date));
+      break;
+    case 'delete revision':
+      db_query('DELETE FROM {invoice} WHERE vid = %d', $node->vid);
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_form_alter
+ */
+function invoice_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'invoice_node_form') {
+    // add an additional submit handler to the #submit array.
+    // use array_merge to make sure the new handler is the first one in the array
+    $form['#submit'] = array_merge(array("invoice_form_submit"), $form['#submit']);
+  }
+}
+
+/**
+ * Implementation of hook_load().
+ */
+function invoice_load($node) {
+  $result = db_query('SELECT uid as uid, date(start_date) as start_date, date(end_date) as end_date FROM {invoice} WHERE vid = %d', $node->vid);
+  return db_fetch_object($result); 
+}
+
+function _invoice_tally($start_date, $end_date, $uid) {
+  $result = db_query("SELECT h.client, SUM(h.entry) as client_total FROM {hours} h LEFT JOIN {hours_sent} hs ON hs.nid = h.nid LEFT JOIN {node} n ON hs.nid = n.nid where date(h.date) BETWEEN '%s' AND '%s' AND n.uid = %d GROUP BY h.client", $start_date, $end_date, $uid);
+  while ($row = db_fetch_object($result)) {
+    $client_totals[$row->client] = $row->client_total;
+    $total_hours += $row->client_total;
+  }
+  
+  $tally = array('by_client' => $client_totals, 'total' => $total_hours);
+  return $tally;
+}
+
+function _get_user_invoice_settings($uid) {
+  $result = db_query("SELECT * FROM {user_invoice_settings} WHERE uid = %d", $uid);
+  if ($row = db_fetch_object($result)) {
+    $settings['invoicer'] = check_markup($row->invoicer, 1);
+    $settings['invoicee'] = check_markup($row->invoicee, 1);
+    $settings['invoice_for'] = check_plain($row->invoice_for);
+    $settings['payment_terms'] = check_plain($row->payment_terms);
+    $settings['hourly_rate'] = check_plain($row->hourly_rate);
+    $settings['currency_symbol'] = check_plain($row->currency_symbol);
+  }
+  
+  return $settings;
+}
+
+/** 
+ * Implementation of hook_view(). 
+ */ 
+function invoice_view($node, $teaser = FALSE, $page = FALSE) {
+  global $user; 
+  $client_totals = array();
+  $total_hours = 0;
+  
+  $uid = $node->uid;
+  $start_date = check_plain($node->start_date);
+  $end_date = check_plain($node->end_date);
+
+  $tally = _invoice_tally($start_date, $end_date, $uid);
+  $client_totals = $tally['by_client'];
+  $total_hours = $tally['total'];
+  
+  $user_invoice_settings = _get_user_invoice_settings($uid);
+  $invoicer = $user_invoice_settings['invoicer'];
+  $invoicee = $user_invoice_settings['invoicee'];
+  $invoice_for = $user_invoice_settings['invoice_for'];
+  $payment_terms = $user_invoice_settings['payment_terms'];
+  $hourly_rate = $user_invoice_settings['hourly_rate'];
+  $currency_symbol = $user_invoice_settings['currency_symbol'];
+  
+  // TODO - Put a 'date formatting' field in the invoice_admin_settings form.
+  //      - Then users can choose how they would like the date formatted.
+  $start_date = date('m/d/Y', strtotime($start_date));
+  $end_date = date('m/d/Y', strtotime($end_date));
+  
+  $node->content['report'] = array(
+    '#value' => theme('report', $start_date, $end_date, $invoicer, $invoicee, $invoice_for, $payment_terms, $hourly_rate, $client_totals, $total_hours, $currency_symbol, $node->paid),
+    '#weight' => 1,
+  );
+  
+  return $node;
+}
+
+/**
+ * Theme function
+ */
+function theme_report($start_date, $end_date, $invoicer, $invoicee, $invoice_for, $payment_terms, $hourly_rate, $client_totals, $total_hours, $currency_symbol) {
+  global $user;
+
+  
+  
+  $module_path = drupal_get_path('module', 'invoice');
+  $full_path = $module_path .'/invoice.css';
+  drupal_add_css($full_path);
+  
+  $total_owed = $total_hours * $hourly_rate;
+  
+  $output = '<div class="header-section">';
+  $output .= '<div class="from-label">From:</div>';
+  $output .= '<div class="from-data">'. $invoicer .'</div>';
+  $output .= '<div class="to-label">To:</div>';
+  $output .= '<div class="to-data">'. $invoicee .'</div>';
+  $output .= '</div>';
+  $output .= '<div class="for-section">';
+  $output .= '<div class="for-label">For:</div>';
+  $output .= '<div class="for-data">'. $invoice_for .' for '. $start_date .' - '. $end_date .'</div>';
+  $output .= '</div>';
+  $output .= '<div class="payment-terms-section">';
+  $output .= '<div class="payment-terms-label">Payment terms:</div>';
+  $output .= '<div class="payment-terms-data">'. $payment_terms .'</div>';
+  $output .= '</div>';
+  $output .= '<div class="details-section">';
+  $output .= '<div class="details-label">Details:</div>';
+  if (!empty($client_totals)) {
+    foreach ($client_totals as $client => $total) {
+      $owed = $hourly_rate * $total;
+      $output .= '<div class="details-row">'.
+                '<div class="details-client">'. $client .'</div>'.
+                '<div class="details-total">'. number_format($total, 2, '.', ',') .'</div>'.
+                '<div class="hourly-rate"> @ '. $currency_symbol . $hourly_rate .' = </div>'.
+                '<div class="owed">'. $currency_symbol . number_format($owed, 2, '.', ',') .'</div>'.
+                '</div>';
+    
+    }
+    $output .= '<div class="total-row">'.
+               '<div class="total-label">Totals</div>'.
+               '<div class="total-hours">'. number_format($total_hours, 2, '.', ',') .'</div>'.
+               '<div class="total-owed">'. $currency_symbol . number_format($total_owed, 2, '.', ',') .'</div>'.
+               '</div>';
+    $output .= '</div>';
+  
+  
+    return $output;
+  }
+}
+
+function theme_invoice_admin_invoices($form) {
+  // If there are rows in this form, then $form['title'] contains a list of
+  // the title form elements.
+  $has_posts = isset($form['title']) && is_array($form['title']);
+  $select_header = $has_posts ? theme('table_select_header_cell') : '';
+  $header = array($select_header, t('Title'), t('Author'), t('Status'));
+  if (isset($form['language'])) {
+    $header[] = t('Language');
+  }
+  $header[] = t('Operations');
+  $output = '';
+
+  $output .= drupal_render($form['options']);
+  if ($has_posts) {
+    foreach (element_children($form['title']) as $key) {
+      $row = array();
+      $row[] = drupal_render($form['nodes'][$key]);
+      $row[] = drupal_render($form['title'][$key]);
+      $row[] = drupal_render($form['username'][$key]);
+      $row[] = drupal_render($form['status'][$key]);
+      if (isset($form['language'])) {
+        $row[] = drupal_render($form['language'][$key]);
+      }
+      $row[] = drupal_render($form['operations'][$key]);
+      $rows[] = $row;
+    }
+
+  }
+  else {
+    $rows[] = array(array('data' => t('No invoices have been sent by this user.'), 'colspan' => '6'));
+  }
+
+  $output .= theme('table', $header, $rows);
+  if ($form['pager']['#value']) {
+    $output .= drupal_render($form['pager']);
+  }
+
+  $output .= drupal_render($form);
+
+  return $output;
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function invoice_theme() {
+  return array(
+    'report' => array(
+      'arguments' => array(
+        'start_date' => NULL,
+        'end_date' => NULL,
+        'invoicer' => NULL,
+        'invoicee' => NULL,
+        'invoice_for' => NULL,
+        'payment_terms' => NULL,
+        'hourly_rate' => NULL,
+        'client_totals' => NULL,
+        'total_hours' => NULL,
+        'currency_symbol' => NULL,
+        'paid' => NULL,
+      ),
+    ),
+    
+    'invoice_admin_invoices' => array(
+      'arguments' => array(
+        'form' => NULL,
+      ),
+    ),
+
+  );
+} 
+
+ 

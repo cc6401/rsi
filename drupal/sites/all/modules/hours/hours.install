@@ -1,0 +1,77 @@
+<?php 
+// $Id: hours.install,v 1.1 2009/09/14 18:41:37 axlroach Exp $ 
+/** 
+ * Install the hours module, including it's content (node) 
+ * type. 
+ * @file 
+ */
+ 
+/** 
+ * Implementation of hook_install(). 
+ */ 
+function hours_install() { 
+  drupal_install_schema('hours'); 
+} 
+/** 
+ * Implementation of hook_uninstall(). 
+ */ 
+function hours_uninstall() { 
+  drupal_uninstall_schema('hours'); 
+} 
+
+/** 
+ * Implementation of hook_schema(). 
+ */ 
+function hours_schema() { 
+  $schema['hours'] = array( 
+    'fields' => array( 
+      'vid' => array( 
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE, 
+        'default' => 0, 
+      ), 
+      'nid' => array( 
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE, 
+        'default' => 0, 
+      ), 
+      'date' => array( 
+        'type' => 'datetime',
+        'not null' => TRUE, 
+      ),
+      'client' => array('type' => 'text', 'not null' => FALSE),
+      'entry' => array('type' => 'float', 'not null' => TRUE), 
+    ), 
+    'indexes' => array( 
+      'nid' => array('nid'), 
+    ), 
+    'primary key' => array('vid'), 
+  ); 
+  $schema['hours_sent'] = array(
+    'fields' => array(
+      'vid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'date_sent' => array(
+        'type' => 'datetime',
+        'not null' => TRUE,
+      ),
+    ),
+    'indexes' => array(
+      'nid' => array('nid'),
+    ),
+    'primary key' => array('vid'),
+  );
+  return $schema; 
+}
