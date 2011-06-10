@@ -1,0 +1,133 @@
+<?php 
+// $Id: invoice.install,v 1.1 2009/09/14 18:41:37 axlroach Exp $ 
+/** 
+ * Install the invoice module, including it's content (node) 
+ * type. 
+ * @file 
+ */
+ 
+/** 
+ * Implementation of hook_install(). 
+ */ 
+function invoice_install() { 
+  drupal_install_schema('invoice'); 
+} 
+/** 
+ * Implementation of hook_uninstall(). 
+ */ 
+function invoice_uninstall() { 
+  drupal_uninstall_schema('invoice'); 
+} 
+
+/** 
+ * Implementation of hook_schema(). 
+ */ 
+function invoice_schema() {
+  $schema['user_invoice_settings'] = array(
+    'fields' => array(
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'invoicer' => array(
+        'type' => 'blob',
+        'not null' => TRUE,
+      ),
+      'invoicee' => array(
+        'type' => 'blob',
+        'not null' => TRUE,
+      ),
+      'invoice_for' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'payment_terms' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'hourly_rate' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'currency_symbol' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+    ),
+    'indexes' => array( 
+      'uid' => array('uid'), 
+    ), 
+    'primary key' => array('uid'), 
+  );    
+  
+  $schema['invoices_sent'] = array(
+    'fields' => array(
+      'vid' => array( 
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE, 
+        'default' => 0, 
+      ), 
+      'nid' => array( 
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE, 
+        'default' => 0, 
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'date_sent' => array( 
+        'type' => 'text',
+        'not null' => TRUE, 
+      ),
+      'paid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),   
+    ),
+  );
+  
+  $schema['invoice'] = array( 
+    'fields' => array( 
+      'vid' => array( 
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE, 
+        'default' => 0, 
+      ), 
+      'nid' => array( 
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE, 
+        'default' => 0, 
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'start_date' => array( 
+        'type' => 'text',
+        'not null' => TRUE, 
+      ),
+      'end_date' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+    ), 
+    'indexes' => array( 
+      'nid' => array('nid'), 
+    ), 
+    'primary key' => array('vid'), 
+  ); 
+  return $schema; 
+}

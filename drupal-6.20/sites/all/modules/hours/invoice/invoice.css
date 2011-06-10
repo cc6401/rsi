@@ -1,0 +1,109 @@
+.invoice {
+  background: red;
+}
+
+.from-label {
+  font-weight: bold;
+  float: left;
+  clear: right;
+  margin-top: 8px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+.from-data {
+  float: left;
+}
+.to-label {
+  font-weight: bold;
+  float: left;
+  margin-top: 8px;
+  margin-left: 100px;
+  margin-right: 10px;
+}
+.to-data {
+  float: left;
+  clear: right; 
+}
+.for-label {
+  font-weight: bold;
+  clear: left;
+  float: left;
+  margin-left: 10px;
+}
+.for-data {
+  float: left;
+  margin-left: 20px;
+}
+
+.payment-terms-label {
+  font-weight: bold;
+  clear: left;
+  float: left;
+  margin-left: 10px;
+}
+.payment-terms-data {
+  float: left;
+  margin-left: 20px;
+}
+
+.details-section {
+  clear: left;
+  float: left;
+  margin-top: 10px;
+}
+.for-section {
+  clear: left;
+  float: left;
+  margin-top: 10px;
+}
+.payment-terms-section {
+  clear: left;
+  float: left;
+  margin-top: 10px;
+}
+
+.details-label {
+  font-weight: bold;
+  float: left;
+  margin-left: 10px;
+}
+.details-client {
+  float: left;
+  margin-right: 15px;
+  margin-left: 10px;
+}
+.details-total {
+  float: left;
+  margin-right: 5px;
+}
+.hourly-rate {
+  float: left;
+}
+.owed {
+  float: left;
+  margin-left: 25px;
+}
+.details-row {
+  clear: left;
+}
+.total-row {
+  clear: left;
+}
+.total-label {
+  font-weight: bold;
+  float: left;
+  margin-top: 10px;
+  margin-left: 10px;
+}
+.total-hours {
+  font-weight: bold;
+  float: left;
+  margin-left: 15px;
+  margin-top: 10px;
+}
+.total-owed {
+  font-weight: bold;
+  float: left;
+  margin-left: 15px;
+  margin-top: 10px;
+}
