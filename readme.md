@@ -11,7 +11,12 @@
 4. Crear un link simbólico desde /rsi/drupal-6.20 al directorio donde está la aplicación web, por ejemplo
    `ln -s <path-to>/rsi/drupal-6.20 /var/www/drupal-6.20`
 
+5. Settear los permisos
+   1. `chmod -R 755 /rsi/drupal-6.20`
+   2. `chmod -R 777 /rsi/drupal-6.20/sites/default/files`
+
 4. Para entrar como administrador:
   1. Acc No: `1`
   2. Password: `password`
+
 
