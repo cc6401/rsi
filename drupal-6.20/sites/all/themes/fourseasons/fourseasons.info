@@ -1,0 +1,17 @@
+name = 4 Seasons
+description = A clean 3 column, fixed width theme (960px).
+core = 6.x
+engine = phptemplate
+; Information added by drupal.org packaging script on 2008-02-04
+version = "6.x-1.5"
+core = "6.x"
+project = "fourseasons"
+datestamp = "1202088005"
+
+
+; Information added by drupal.org packaging script on 2008-03-16
+version = "6.x-2.0"
+core = "6.x"
+project = "fourseasons"
+datestamp = "1205668508"
+

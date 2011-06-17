@@ -1,0 +1,23 @@
+body {
+  text-align:center;  
+}
+
+#pagewrapper {
+  text-align:left;
+}
+
+#middle-content {
+  width:99%;
+  float:left;
+}
+
+.sidebar-left #middle-content,
+.sidebar-right #middle-content {
+  width:77%;
+  float:left;
+}
+
+.sidebars #middle-content {
+  width:56%;
+  float:left;
+}
